@@ -159,7 +159,7 @@ def build_auth(s: Settings) -> AzureProvider:
         tenant_id=s.tenant_id,
         base_url=s.base_url,
         required_scopes=s.required_scopes,
-        additional_authorize_scopes=ALL_GRAPH_SCOPES,   # RQ-008
+        additional_authorize_scopes=ALL_GRAPH_SCOPES,
     )
     # 未決の値は「設定されたときだけ」渡す（NF-003）
     for name in ("jwt_signing_key", "require_authorization_consent",
@@ -311,9 +311,9 @@ def register(mcp: FastMCP) -> None:
         search: str | None = None,
         max_items: int = 25,
         cursor: str | None = None,
-        graph_token: str = EntraOBOToken([scopes.MAIL_RW]),   # RQ-007
+        graph_token: str = EntraOBOToken([scopes.MAIL_RW]),
     ) -> dict:
-        """メールを一覧・検索する（RQ-112）"""
+        """メールを一覧・検索する。"""
         path = (f"/me/mailFolders/{quote(folder_id, safe='')}/messages"
                 if folder_id else "/me/messages")       # パスに入れる値は URL エンコード
         params = {"$search": search_phrase(search)} if search else {}  # " と \ をエスケープして "..." で囲む
