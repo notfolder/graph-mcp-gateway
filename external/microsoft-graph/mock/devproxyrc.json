@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dotnet/dev-proxy/main/schemas/v4.0.0/rc.schema.json",
+  "plugins": [
+    {
+      "name": "MockResponsePlugin",
+      "enabled": true,
+      "pluginPath": "~appFolder/plugins/DevProxy.Plugins.dll",
+      "configSection": "graphMocks"
+    }
+  ],
+  "urlsToWatch": [
+    "https://graph.microsoft.com/v1.0/*",
+    "https://mock-download.sharepoint.com/*"
+  ],
+  "graphMocks": {
+    "$schema": "https://raw.githubusercontent.com/dotnet/dev-proxy/main/schemas/v4.0.0/mockresponseplugin.schema.json",
+    "mocksFile": "mocks.json",
+    "blockUnmockedRequests": true
+  },
+  "logLevel": "information",
+  "newVersionNotification": "none",
+  "showTimestamps": true,
+  "validateSchemas": true
+}

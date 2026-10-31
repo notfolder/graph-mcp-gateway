@@ -1,0 +1,44 @@
+{
+  "users": [
+    {
+      "id": "alice",
+      "oid": "aaaaaaaa-0000-0000-0000-000000000001",
+      "name": "Alice Mock",
+      "upn": "alice@contoso.test",
+      "assigned": true,
+      "consented_graph_scopes": [
+        "User.Read", "Mail.ReadWrite", "Mail.Send", "Calendars.ReadWrite", "Files.ReadWrite.All",
+        "Sites.ReadWrite.All", "Chat.ReadWrite", "ChatMessage.Send", "Team.ReadBasic.All",
+        "Channel.ReadBasic.All", "ChannelMessage.Read.All", "ChannelMessage.Send"
+      ]
+    },
+    {
+      "id": "bob",
+      "oid": "bbbbbbbb-0000-0000-0000-000000000002",
+      "name": "Bob Mock",
+      "upn": "bob@contoso.test",
+      "assigned": true,
+      "consented_graph_scopes": [
+        "User.Read", "Mail.ReadWrite", "Mail.Send", "Calendars.ReadWrite", "Files.ReadWrite.All",
+        "Sites.ReadWrite.All", "Chat.ReadWrite", "ChatMessage.Send", "Team.ReadBasic.All",
+        "Channel.ReadBasic.All", "ChannelMessage.Read.All", "ChannelMessage.Send"
+      ]
+    },
+    {
+      "id": "carol",
+      "oid": "cccccccc-0000-0000-0000-000000000003",
+      "name": "Carol Unassigned",
+      "upn": "carol@contoso.test",
+      "assigned": false,
+      "consented_graph_scopes": []
+    },
+    {
+      "id": "dave",
+      "oid": "dddddddd-0000-0000-0000-000000000004",
+      "name": "Dave No-Consent",
+      "upn": "dave@contoso.test",
+      "assigned": true,
+      "consented_graph_scopes": ["User.Read"]
+    }
+  ]
+}
