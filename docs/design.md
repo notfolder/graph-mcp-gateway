@@ -2,7 +2,7 @@
 
 - 作成日：2026-10-31
 - 対象読者：実装を担当する AI エージェントと開発者
-- 前提資料：「要件仕様書」（RQ / NF / CN の ID はこれを参照）、「OAuth プロキシ仕様」
+- 前提資料：「要件仕様書」（`docs/requirements.md`。RQ / NF / CN の ID はこれを参照）、「依頼資料」「OAuth プロキシ仕様」（`docs/related_materials.md`）
 - プロジェクト名：**未決**（本書ではパッケージ名を仮に `app`、環境変数の接頭辞を仮に `APP_` と書く）
 
 > 本書の設計は実装方針の **案** です。要件仕様書の「未決」の値はここでも決めていません。 「実装時確認」と書いた箇所は、ライブラリの API を実装時にドキュメントまたはソースコードで確かめてください。
@@ -104,7 +104,7 @@ flowchart TB
 
 ## 4. 設定（環境変数）
 
-[`config.py`](http://config.py) で環境変数を読み込み、`Settings` にまとめる。**未設定の場合は FastMCP に値を渡さず、FastMCP の既定値を使う**（NF-003）。
+`config.py` で環境変数を読み込み、`Settings` にまとめる。**未設定の場合は FastMCP に値を渡さず、FastMCP の既定値を使う**（NF-003）。
 
 
 | 環境変数（仮）                            | FastMCP のパラメータ                        | 必須          | 値の出どころ                                                 |
@@ -113,18 +113,25 @@ flowchart TB
 | `APP_CLIENT_SECRET`                | `client_secret`                       | ○           | 依頼資料 P-8                                               |
 | `APP_TENANT_ID`                    | `tenant_id`                           | ○           | 依頼資料 P-8（`common` は起動時に拒否：CN-004）                      |
 | `APP_BASE_URL`                     | `base_url`                            | ○           | **未決 U-1**                                             |
-| `APP_REQUIRED_SCOPES`              | `required_scopes`                     | ○           | **未決 U-2**（カンマ区切り）                                     |
+| `APP_REQUIRED_SCOPES`              | `required_scopes`                     | ○           | **未決 U-2**（カンマ区切り。`api://…` を付けない名前で書く。`AzureProvider` が `identifier_uri` を自動で付ける） |
 | `APP_JWT_SIGNING_KEY`              | `jwt_signing_key`                     | —           | **未決 U-4**                                             |
 | `APP_STORAGE_REDIS_URL`            | `client_storage`（Redis）               | —           | **未決 U-3**（設定時は暗号化キーも必須）                               |
 | `APP_STORAGE_ENCRYPTION_KEY`       | `FernetEncryptionWrapper` の鍵          | Redis 利用時 ○ | **未決 U-3**                                             |
-| `APP_REQUIRE_CONSENT`              | `require_authorization_consent`       | —           | **未決 U-5**（`true` / `remember` / `false` / `external`） |
+| `APP_REQUIRE_CONSENT`              | `require_authorization_consent`       | —           | **未決 U-5**（`true` → `True`、`false` → `False`、`remember` / `external` → 同じ文字列。それ以外は起動エラー） |
 | `APP_ALLOWED_CLIENT_REDIRECT_URIS` | `allowed_client_redirect_uris`        | —           | **未決 U-6**（カンマ区切り）                                     |
 | `APP_ENABLE_CIMD`                  | `enable_cimd`                         | —           | **未決 U-7**                                             |
 | `APP_ACCESS_TOKEN_EXPIRY_SECONDS`  | `fastmcp_access_token_expiry_seconds` | —           | **未決 U-8**                                             |
+| `APP_STATELESS_HTTP`               | `stateless_http`（`run_http_async()` / `http_app()` の引数） | —           | **未決 U-9**（複数台にする場合に `true`。10章）。未設定なら FastMCP の既定（`False`） |
+| `APP_GRAPH_MAX_RETRIES`            | — （`GraphClient` の再試行回数）        | —           | 未設定のときの値は提案 PP-003（未承認）                              |
+| `APP_UPLOAD_MAX_BYTES`             | — （`files_upload` で受け取る上限）     | —           | 上限値は提案 PP-005（未承認）                                     |
 | `APP_HOST` / `APP_PORT`            | 起動時の待ち受け                              | —           | 構築時に決定                                                 |
 
 
-`additional_authorize_scopes` は環境変数にせず、`graph/[scopes.py](http://scopes.py)` の一覧から組み立てる（6章）。
+`additional_authorize_scopes` は環境変数にせず、`graph/scopes.py` の一覧から組み立てる（6章）。
+
+- `identifier_uri` は設定にしない。依頼資料 P-2 で既定値の `api://{client_id}` を依頼しており、`AzureProvider` の既定値と同じため。
+- `offline_access` は `AzureProvider` が自動で足すので、`scopes.py` にも設定にも書かない（RQ-009）。
+- `APP_GRAPH_MAX_RETRIES` と `APP_UPLOAD_MAX_BYTES` は FastMCP の設定ではない。未設定のときの値は提案が承認されてから決める（それまで実装は値を決めずに止めて質問する：AI-001）。
 
 ```mermaid
 flowchart LR
@@ -138,7 +145,7 @@ flowchart LR
 
 ---
 
-## 5. 認証（[`auth.py`](http://auth.py)・[`storage.py`](http://storage.py)）
+## 5. 認証（`auth.py`・`storage.py`）
 
 ```python
 # 概略（引数名は FastMCP 4.1.x の AzureProvider に合わせる。実装時確認）
@@ -170,10 +177,13 @@ def build_auth(s: Settings) -> AzureProvider:
 
 - `build_client_storage` は、`APP_STORAGE_REDIS_URL` が設定されたときだけ Redis ストアを `FernetEncryptionWrapper` で包んで返す（NF-004）。暗号化キーがなければ起動エラーにする。
 - 複数台構成（U-9）では、`APP_JWT_SIGNING_KEY` と Redis の両方が必要。片方だけのときは起動時に警告する（NF-005）。
+- Redis を使う場合は、依存に `py-key-value-aio[redis]` を加える（`fastmcp[azure]` には含まれない）。
+- `APP_JWT_SIGNING_KEY` が未設定のとき、署名鍵はクライアントシークレットから導出される。既定の保管先の暗号鍵と保存ディレクトリもこの署名鍵から導出されるため、シークレットを更新すると保管済みの登録・トークンが読めなくなり、全員が再サインインになる（判断材料として U-4 に記載）。
+- Entra のアクセストークンは v2 形式であることが前提（`AzureProvider` は発行者 `https://login.microsoftonline.com/{tenant_id}/v2.0` で検証する）。依頼資料 P-3 で `requestedAccessTokenVersion: 2` を依頼済み。
 
 ---
 
-## 6. Graph のスコープ（`graph/[scopes.py](http://scopes.py)`）
+## 6. Graph のスコープ（`graph/scopes.py`）
 
 スコープを1か所で定義し、`additional_authorize_scopes` と各ツールの `EntraOBOToken` の両方がここを参照する。これにより「ツールが使うスコープが `additional_authorize_scopes` に含まれない」誤りを防ぐ（RQ-008）。
 
@@ -200,6 +210,8 @@ ALL_GRAPH_SCOPES = [USER_READ, MAIL_RW, MAIL_SEND, CAL_RW, FILES_RW_ALL, SITES_R
 
 単体テストで「全ツールの `EntraOBOToken` のスコープ ⊆ `ALL_GRAPH_SCOPES`」を検査する。
 
+- OBO で得られる Graph 用トークンには、ツールが指定したスコープだけでなく、同意済みの Graph のスコープがすべて入る（Entra ID の仕様）。ツールごとのスコープ指定は権限の絞り込みにはならない（RQ-007 の注記）。
+
 ---
 
 ## 7. ツール一覧
@@ -211,9 +223,9 @@ ALL_GRAPH_SCOPES = [USER_READ, MAIL_RW, MAIL_SEND, CAL_RW, FILES_RW_ALL, SITES_R
 
 | ツール名（案）                                          | 要件     | Graph API                                                                          | スコープ                            |
 | ------------------------------------------------ | ------ | ---------------------------------------------------------------------------------- | ------------------------------- |
-| `me_get_profile`                                 | RQ-101 | `GET /me`                                                                          | [`User.Read`](http://User.Read) |
+| `me_get_profile`                                 | RQ-101 | `GET /me`                                                                          | `User.Read` |
 | `mail_list_folders`                              | RQ-111 | `GET /me/mailFolders`                                                              | `Mail.ReadWrite`                |
-| `mail_list_messages`                             | RQ-112 | `GET /me/messages` または `/me/mailFolders/{id}/messages`（`$top`・`$filter`・`$search`） | `Mail.ReadWrite`                |
+| `mail_list_messages`                             | RQ-112 | `GET /me/messages` または `/me/mailFolders/{id}/messages`（`$top`、および `$filter` か `$search` のどちらか一方） | `Mail.ReadWrite`                |
 | `mail_get_message`                               | RQ-113 | `GET /me/messages/{id}`、`GET /me/messages/{id}/attachments`                        | `Mail.ReadWrite`                |
 | `mail_create_draft` / `mail_update_draft`        | RQ-114 | `POST /me/messages`、`PATCH /me/messages/{id}`                                      | `Mail.ReadWrite`                |
 | `mail_send`                                      | RQ-115 | `POST /me/sendMail`                                                                | `Mail.Send`                     |
@@ -222,6 +234,9 @@ ALL_GRAPH_SCOPES = [USER_READ, MAIL_RW, MAIL_SEND, CAL_RW, FILES_RW_ALL, SITES_R
 | `mail_move`                                      | RQ-116 | `POST /me/messages/{id}/move`                                                      | `Mail.ReadWrite`                |
 | `mail_update_flags`                              | RQ-116 | `PATCH /me/messages/{id}`（`isRead`・`flag`）                                         | `Mail.ReadWrite`                |
 | `mail_delete`                                    | RQ-116 | `DELETE /me/messages/{id}`                                                         | `Mail.ReadWrite`                |
+
+- メールでは `$search` と `$filter` を同じ要求に入れると Graph が 400 を返す。`$search` と `$orderby` も同じ。`mail_list_messages` は検索語と絞り込み条件の両方を受け取ったら、Graph に送らず `ToolError`（どちらか一方にするよう伝える）を返す。
+- `$search` の検索語は `"..."` で囲み、検索語の中の `"` と `\` はエスケープする。
 
 
 ### 7.2 予定表
@@ -248,7 +263,7 @@ ALL_GRAPH_SCOPES = [USER_READ, MAIL_RW, MAIL_SEND, CAL_RW, FILES_RW_ALL, SITES_R
 | `files_search`         | RQ-132 | `GET /me/drive/root/search(q='...')`、`GET /drives/{drive-id}/root/search(q='...')`                                                 | `Files.ReadWrite.All` |
 | `files_get_item`       | RQ-133 | `GET /drives/{drive-id}/items/{item-id}`                                                                                           | `Files.ReadWrite.All` |
 | `files_get_content`    | RQ-133 | `GET /drives/{drive-id}/items/{item-id}/content`                                                                                   | `Files.ReadWrite.All` |
-| `files_upload`         | RQ-134 | 小さいファイル：`PUT /drives/{drive-id}/items/{parent-id}:/{name}:/content`。大きいファイル：`POST .../createUploadSession` で分割アップロード（境目のサイズは実装時確認） | `Files.ReadWrite.All` |
+| `files_upload`         | RQ-134 | `PUT /drives/{drive-id}/items/{parent-id}:/{name}:/content`（簡易アップロードのみ。分割アップロードは作らない）                                       | `Files.ReadWrite.All` |
 | `files_create_folder`  | RQ-135 | `POST /drives/{drive-id}/items/{parent-id}/children`（`folder: {}`）                                                                 | `Files.ReadWrite.All` |
 | `files_move_or_rename` | RQ-135 | `PATCH /drives/{drive-id}/items/{item-id}`（`name`・`parentReference`）                                                               | `Files.ReadWrite.All` |
 | `files_delete`         | RQ-135 | `DELETE /drives/{drive-id}/items/{item-id}`                                                                                        | `Files.ReadWrite.All` |
@@ -257,6 +272,9 @@ ALL_GRAPH_SCOPES = [USER_READ, MAIL_RW, MAIL_SEND, CAL_RW, FILES_RW_ALL, SITES_R
 
 
 - `files_get_content` は、テキストとして読める種類はテキストで、それ以外は種類とサイズの情報を返す。返すサイズの上限は提案 PP-002（未承認）。
+- `/content` は 302 で、認証済みのダウンロード URL（SharePoint のドメイン）へ転送される。`httpx2` は既定で転送をたどらないため、この要求だけ `GraphClient.download()` で転送をたどる（8.1）。`httpx2` は別のオリジンへの転送時に `Authorization` を外すので、Graph 用トークンは転送先に送られない（`httpx2` のソースで確認）。
+- `files_upload` は内容を `content`（文字列）と `encoding`（`text` または `base64`）で受け取る。`text` は UTF-8 で符号化して送る。`base64` は復号してから送り、復号できなければ `ToolError` を返す。
+- 受け取る内容のサイズ（復号後のバイト数）が `APP_UPLOAD_MAX_BYTES` を超えたら、Graph に送らず `ToolError` を返す（上限値は提案 PP-005）。簡易アップロードの公式の上限は 250 MB で、ツール引数で渡せる大きさはそれより十分小さいため、分割アップロード（`createUploadSession`）は作らない。
 
 ### 7.4 Teams
 
@@ -268,20 +286,22 @@ ALL_GRAPH_SCOPES = [USER_READ, MAIL_RW, MAIL_SEND, CAL_RW, FILES_RW_ALL, SITES_R
 | `teams_send_chat_message`     | RQ-142 | `POST /chats/{chat-id}/messages`                                           | `ChatMessage.Send`                                      |
 | `teams_list_joined_teams`     | RQ-143 | `GET /me/joinedTeams`                                                      | `Team.ReadBasic.All`                                    |
 | `teams_list_channels`         | RQ-143 | `GET /teams/{team-id}/channels`                                            | `Channel.ReadBasic.All`                                 |
-| `teams_list_channel_messages` | RQ-144 | `GET /teams/{team-id}/channels/{channel-id}/messages`                      | `[ChannelMessage.Read](http://ChannelMessage.Read).All` |
-| `teams_list_message_replies`  | RQ-144 | `GET /teams/{team-id}/channels/{channel-id}/messages/{message-id}/replies` | `[ChannelMessage.Read](http://ChannelMessage.Read).All` |
+| `teams_list_channel_messages` | RQ-144 | `GET /teams/{team-id}/channels/{channel-id}/messages`                      | `ChannelMessage.Read.All` |
+| `teams_list_message_replies`  | RQ-144 | `GET /teams/{team-id}/channels/{channel-id}/messages/{message-id}/replies` | `ChannelMessage.Read.All` |
 | `teams_send_channel_message`  | RQ-145 | `POST /teams/{team-id}/channels/{channel-id}/messages`                     | `ChannelMessage.Send`                                   |
 | `teams_reply_channel_message` | RQ-145 | `POST .../messages/{message-id}/replies`                                   | `ChannelMessage.Send`                                   |
 
 
 - Teams のメッセージ本文は HTML で返ることがある。本文の種類（`contentType`）をそのまま返し、変換はしない（案）。
+- チャットとチャネルのメッセージの一覧は、`$top` の上限が 50（Graph の仕様）。`$top` には `min(max_items, 50)` を渡す（8.2）。
 
 ### 7.5 ツールの実装例
 
 ```python
+from urllib.parse import quote
 from fastmcp import FastMCP
 from fastmcp.server.auth.providers.azure import EntraOBOToken
-from app.graph.client import GraphClient
+from app.graph.client import GraphClient, search_phrase
 from app.graph import scopes
 
 def register(mcp: FastMCP) -> None:
@@ -294,8 +314,9 @@ def register(mcp: FastMCP) -> None:
         graph_token: str = EntraOBOToken([scopes.MAIL_RW]),   # RQ-007
     ) -> dict:
         """メールを一覧・検索する（RQ-112）"""
-        path = f"/me/mailFolders/{folder_id}/messages" if folder_id else "/me/messages"
-        params = {"$search": f'"{search}"'} if search else {}
+        path = (f"/me/mailFolders/{quote(folder_id, safe='')}/messages"
+                if folder_id else "/me/messages")       # パスに入れる値は URL エンコード
+        params = {"$search": search_phrase(search)} if search else {}  # " と \ をエスケープして "..." で囲む
         async with GraphClient(graph_token) as g:
             return await g.list(path, params=params, max_items=max_items, cursor=cursor)
 
@@ -303,42 +324,52 @@ def register(mcp: FastMCP) -> None:
 
 ---
 
-## 8. Graph クライアント（`graph/[client.py](http://client.py)`）
+## 8. Graph クライアント（`graph/client.py`）
 
 ### 8.1 責務
 
 
 | 責務     | 内容                                                                                                                                   | 要件     |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------ | ------ |
-| 要求     | ベース URL [`https://graph.microsoft.com/v1.0`、`Authorization`](https://graph.microsoft.com/v1.0、Authorization)`: Bearer {graph_token}` | RQ-190 |
-| ページング  | `@odata.nextLink` をたどり、`max_items` に達したら止める。続きがあれば `next_cursor` を返す                                                                 | RQ-191 |
-| 再試行    | 429・503・504 で `Retry-After` に従って待って再試行                                                                                               | NF-006 |
+| 要求     | ベース URL `https://graph.microsoft.com/v1.0`、`Authorization: Bearer {graph_token}`。パスに入れる ID などの値は URL エンコードする（`/` を含む値で別の API を呼べないようにする） | RQ-190 |
+| ページング  | `@odata.nextLink` をたどり、`max_items` に達したら止める。続きがあれば `next_cursor` を返す。取りこぼし・重複を出さない（8.2） | RQ-191 |
+| 再試行    | 429・503 で `Retry-After` に従って待って再試行（504 を加えるかは提案 PP-006）                                                     | NF-006 |
+| ダウンロード | `download(path)`：転送（302）をたどってファイルの中身を取得する。転送をたどるのはこの要求だけ（7.3） | RQ-133 |
 | エラー変換  | Graph のエラー（`error.code`・`error.message`）を `ToolError` に変換                                                                            | RQ-192 |
 | テスト容易性 | HTTP トランスポートを差し替えられる（モックを注入）                                                                                                         | NF-008 |
 
 
 ### 8.2 ページング
 
+`list(path, params, max_items, cursor, page_size_limit=None, supports_top=True)` は次のように動く。
+
+- 最初の要求には `$top=min(max_items, page_size_limit)` を付ける（`page_size_limit` は API ごとの `$top` の上限。Teams のメッセージは 50）。`$top` に対応しない API（`supports_top=False`）には付けない。どの API が `$top` に対応するかは、ツールごとに Graph の公式ドキュメントで確かめる。
+- `cursor` は「取得するページの URL」と「そのページの何件目から返すか（offset）」を組にして、base64url で符号化した文字列にする。ページの途中で `max_items` に達したときは、同じページの URL と、返し終えた位置を `next_cursor` にする。こうすると、ページを切り詰めても取りこぼしが出ない。
+
 ```mermaid
 flowchart TD
   A["list(path, max_items, cursor)"] --> B{"cursorあり？"}
-  B -->|"あり"| C{"cursorが https://graph.microsoft.com/v1.0/ で始まる？"}
+  B -->|"あり"| C{"cursorを復号でき、URLが https://graph.microsoft.com/v1.0/ で始まる？"}
   C -->|"いいえ"| X["ToolError（不正なcursor）"]
-  C -->|"はい"| D["cursorのURLを取得"]
-  B -->|"なし"| E["path＋paramsを取得"]
-  D --> F["valueを結果に追加"]
+  C -->|"はい"| D["url・offset＝cursorの値"]
+  B -->|"なし"| E["url＝path＋params（＋$top）<br/>offset＝0"]
+  D --> F["urlを取得し、valueのoffset件目以降を取り出す"]
   E --> F
-  F --> G{"件数 ≥ max_items？"}
-  G -->|"はい"| H["max_itemsで切り詰め<br/>next_cursor＝nextLink（あれば）"]
-  G -->|"いいえ"| I{"@odata.nextLinkあり？"}
-  I -->|"あり"| D
-  I -->|"なし"| J["next_cursor＝なし"]
+  F --> G{"残り件数（max_items − 取得済み）より多い？"}
+  G -->|"はい"| H["残り件数だけ結果に追加<br/>next_cursor＝(url, offset＋追加した件数)"]
+  G -->|"いいえ"| I["すべて結果に追加"]
+  I --> L{"@odata.nextLinkあり？"}
+  L -->|"なし"| J["next_cursor＝なし"]
+  L -->|"あり"| M{"取得済み ≥ max_items？"}
+  M -->|"はい"| N["next_cursor＝(nextLink, 0)"]
+  M -->|"いいえ"| O["url＝nextLink、offset＝0"] --> F
   H --> K["{items, next_cursor} を返す"]
   J --> K
+  N --> K
 
 ```
 
-- `cursor` は AI ツールから渡ってくる値なので、**Graph の URL 以外を受け付けない**。他の URL を許すと、利用者の Graph トークンを付けて任意の宛先に要求を送れてしまうため。
+- `cursor` は AI ツールから渡ってくる値なので、**中の URL が Graph の URL でなければ受け付けない**。他の URL を許すと、利用者の Graph トークンを付けて任意の宛先に要求を送れてしまうため。
 
 ### 8.3 再試行とエラー
 
@@ -346,7 +377,7 @@ flowchart TD
 flowchart TD
   R["Graphに要求"] --> S{"応答"}
   S -->|"2xx"| OK["結果を返す"]
-  S -->|"429 / 503 / 504"| W{"再試行回数の上限内？"}
+  S -->|"429 / 503"| W{"再試行回数の上限内？"}
   W -->|"はい"| SL["Retry-After 秒待つ（なければ段階的に待つ）"] --> R
   W -->|"いいえ"| E1["ToolError（混雑のため失敗）"]
   S -->|"401"| E2["ToolError（認証エラー。再サインインを促す）"]
@@ -357,7 +388,16 @@ flowchart TD
 ```
 
 - エラーメッセージには、トークン・要求ヘッダーを含めない（CN-001）。
-- 再試行回数の上限は設定で変更可能にする。既定値は提案 PP-003（未承認）。
+- 再試行回数の上限は `APP_GRAPH_MAX_RETRIES` で変更可能にする。既定値は提案 PP-003（未承認）。
+- `download()` 以外の要求で 3xx が返ったら、転送をたどらず「その他」として `ToolError` にする。
+
+### 8.4 Graph 用トークンの取得（OBO）の失敗
+
+`EntraOBOToken` の交換が失敗すると、FastMCP はその例外を「Failed to resolve dependency 'graph_token' for （ツール名）」という `RuntimeError` に包み、元の例外を `__cause__` に入れる（FastMCP 4.1.4 のソースで確認）。このままでは AI ツールに原因が伝わらない（RQ-192）。
+
+- FastMCP のミドルウェア（`on_call_tool`）で `RuntimeError` を受け（依存の解決はツールの実行の中で行われ、ミドルウェアの内側にある。単体テストで確かめる）、`__cause__` をたどって `azure.identity` の認証エラーを見つけたら、`ToolError` に変換する。
+- メッセージには、Entra のエラーコード（`AADSTS65001` なら「権限の同意が無い」、トークンの期限切れなら「再サインインが必要」など）だけを入れ、トークンや要求の中身は含めない（CN-001）。
+- エラーコードの取り出し方は、`azure.identity` の例外の属性を実装時に確かめる（実装時確認）。
 
 ---
 
@@ -389,7 +429,8 @@ sequenceDiagram
 
 ```
 
-- 利用者のトークンがない状態では `EntraOBOToken` の解決が失敗し、ツールは実行されない。サーバー自身のアカウントで Graph を呼ぶ代替経路は作らない（CN-003）。
+- 利用者のトークンがない状態では `EntraOBOToken` の解決が失敗し、ツールは実行されない。サーバー自身のアカウントで Graph を呼ぶ代替経路は作らない（CN-003）。失敗の伝え方は 8.4。
+- `graph_token` はツールの引数一覧（スキーマ）に出ず、AI ツールが同じ名前の引数を送っても FastMCP が捨てる（FastMCP 4.1.4 のソースで確認）。
 
 ---
 
@@ -415,11 +456,15 @@ flowchart LR
 | 項目                | 構成A                | 構成B                             |
 | ----------------- | ------------------ | ------------------------------- |
 | `client_storage`  | 既定（暗号化ディスク）        | Redis＋`FernetEncryptionWrapper` |
-| `jwt_signing_key` | 未設定でも可（シークレットから導出） | 全台で同じ値を明示                       |
-| 再起動後のサインイン状態      | ディスクが残れば保たれる       | 保たれる                            |
+| `jwt_signing_key` | 未設定でも可（シークレットから導出。シークレットの更新で全員が再サインインになる：5章） | 全台で同じ値を明示                       |
+| `stateless_http`（`APP_STATELESS_HTTP`） | 未設定（FastMCP の既定 `False`） | `true` |
+| 負荷分散の振り分け | — | どの台に振ってもよい（同じ台への固定は不要） |
+| 再起動後のサインイン状態      | 保管先のディレクトリ（`FASTMCP_HOME` の下）が残れば保たれる。コンテナではこのディレクトリを永続化する | 保たれる                            |
 
 
 - 公開 URL（`base_url`）は HTTPS であること（Entra ID のリダイレクト URI の要件）。TLS の終端場所は構築時に決める。
+- MCP の Streamable HTTP は、既定ではセッションをプロセスのメモリに持つ。複数台で負荷分散すると、別の台に振られた要求が失敗する。構成B では `APP_STATELESS_HTTP=true` にし、要求ごとにセッションを作る動作にする（NF-005）。この動作ではサーバーから AI ツールへの通知が使えないが、本システムのツールは通知を使わない。
+- OBO の資格情報のキャッシュは各台のメモリにあり（1台あたり最大 128 人分）、台をまたいで共有しなくても動作は変わらない（交換の回数が増えるだけ）。
 
 ---
 
@@ -430,7 +475,9 @@ flowchart LR
 | -------------- | ------------------------------------------------------------------ | --------------------------- |
 | 単体：設定          | 必須値の欠落で起動エラー、`common` の拒否、未設定の値を FastMCP に渡さないこと                   | NF-002、NF-003、CN-004        |
 | 単体：スコープ        | 全ツールのスコープが `ALL_GRAPH_SCOPES` に含まれること                              | RQ-008                      |
-| 単体：GraphClient | ページング、`max_items`、不正な `cursor` の拒否、429 の再試行、エラー変換、エラーにトークンが含まれないこと | RQ-191、RQ-192、NF-006、CN-001 |
+| 単体：GraphClient | ページング（ページの途中で `max_items` に達したときに取りこぼし・重複がないこと）、不正な `cursor` の拒否、429・503 の再試行、エラー変換、エラーにトークンが含まれないこと、`download()` が 302 をたどり転送先に `Authorization` を送らないこと | RQ-191、RQ-192、NF-006、CN-001、RQ-133 |
+| 単体：OBO の失敗   | OBO の失敗が、原因の分かる `ToolError` になり、トークンを含まないこと                                   | RQ-192、CN-001               |
+| 単体：入力の検査     | `$search` と `$filter` の同時指定の拒否、アップロードの上限超過と base64 の復号失敗の拒否                   | RQ-112、RQ-134               |
 | 単体：ツール         | 各ツールが正しい Graph API・メソッド・本文を組み立てること（モック）                            | RQ-101〜145                  |
 | PoC：接続         | Claude Code・Codex・OpenCode から鍵なしで接続                                | AC-001                      |
 | PoC：分離         | 利用者 A・B で互いのデータが見えない                                               | AC-002                      |
@@ -454,3 +501,5 @@ flowchart LR
 | PP-002 | `files_get_content` で返すサイズに上限を設ける（要件仕様書 12章）                     |
 | PP-003 | Graph の再試行回数の既定値を決める（例：3回）                                       |
 | PP-004 | ツール名を本書 7章の `対象_操作` 形式で確定する                                      |
+| PP-005 | `files_upload` で受け取るサイズの上限値を決める（要件仕様書 12章）                    |
+| PP-006 | 再試行の対象に 504 を加える（要件仕様書 12章）                                       |
