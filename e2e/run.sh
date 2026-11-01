@@ -38,11 +38,17 @@ dc() { docker compose --env-file "$ENV_FILE" "${BASE_FILES[@]}" ${EXTRA_FILES[@]
 
 # ---- 手順 1：作業場所と証明書 ---------------------------------------------------
 prepare_work() {
+  # 引数：Entra ID の模擬と受け口の証明書に入れるホスト名（既定は mock モードの名前）
+  local entra_host="${1:-mock-entra}" gateway_host="${2:-gateway}"
   rm -rf "$WORK"
   mkdir -p "$CERTS/gateway" "$LOGS" "$WORK/devproxy-cert" "$WORK/llm" "$WORK/state" "$WORK/records"
-  bash external/entra-id/e2e/make-certs.sh "$CERTS" mock-entra gateway >/dev/null
-  cp "$CERTS/gateway.crt" "$CERTS/gateway/server.crt"
-  cp "$CERTS/gateway.key" "$CERTS/gateway/server.key"
+  bash external/entra-id/e2e/make-certs.sh "$CERTS" "$entra_host" "$gateway_host" >/dev/null
+  if [ "$entra_host" != mock-entra ]; then
+    cp "$CERTS/$entra_host.crt" "$CERTS/mock-entra.crt"
+    cp "$CERTS/$entra_host.key" "$CERTS/mock-entra.key"
+  fi
+  cp "$CERTS/$gateway_host.crt" "$CERTS/gateway/server.crt"
+  cp "$CERTS/$gateway_host.key" "$CERTS/gateway/server.key"
   openssl genrsa -out "$CERTS/mock-entra-signing.key" 2048 2>/dev/null
   # テスト専用の鍵。コンテナの root でない利用者が読めるようにする
   chmod 644 "$CERTS"/*.key "$CERTS/gateway/server.key"
@@ -217,19 +223,26 @@ real_mode() {
 real_offsite_mode() {
   [ -f .env ] || { echo ".env がありません（OPENWEBUI_LLM_* を書いてください）" >&2; exit 1; }
   ENV_FILE=$WORK/offsite.env
-  EXTRA_FILES=()
+  EXTRA_FILES=(-f e2e/compose.offsite.yaml)
   if [ "$OFFSITE_STOP" -eq 1 ]; then
     dc down -v --remove-orphans
     return
   fi
   log "real-offsite：模擬の Entra ID・Graph と、.env の言語モデルで起動します"
   docker compose --env-file e2e/mock.env "${BASE_FILES[@]}" --profile mock down -v --remove-orphans >/dev/null 2>&1
-  prepare_work
-  # mock の値に、.env の言語モデルの 3 つだけを上書きする（鍵は画面にも記録にも出さない）
-  cp e2e/mock.env "$ENV_FILE"
+  prepare_work entra.localhost gateway.localhost
+  # mock の値のうち、ホスト名・言語モデル・トークンの期限だけを差し替える（鍵は画面にも記録にも出さない）
+  local replaced='^(PUBLIC_HOSTNAME|E2E_BASE_HOST|APP_ENTRA_BASE_AUTHORITY|NO_PROXY|MOCK_ACCESS_TOKEN_LIFETIME|OPENWEBUI_LLM_(BASE_URL|API_KEY|MODEL))='
+  grep -vE "$replaced" e2e/mock.env > "$ENV_FILE"
+  {
+    echo "PUBLIC_HOSTNAME=gateway.localhost"
+    echo "E2E_BASE_HOST=gateway.localhost"
+    echo "APP_ENTRA_BASE_AUTHORITY=entra.localhost:9443"
+    echo "NO_PROXY=entra.localhost,mock-entra,ms365-full,ms365-discovery,redis"
+    # 手で確かめる間にトークンが切れないよう、模擬の Entra ID のトークンの期限を 1 時間にする
+    echo "MOCK_ACCESS_TOKEN_LIFETIME=3600"
+  } >> "$ENV_FILE"
   grep -E '^OPENWEBUI_LLM_(BASE_URL|API_KEY|MODEL)=' .env >> "$ENV_FILE" || { echo ".env に OPENWEBUI_LLM_* がありません" >&2; exit 1; }
-  # 手で確かめる間にトークンが切れないよう、模擬の Entra ID のトークンの期限を 1 時間にする
-  echo "MOCK_ACCESS_TOKEN_LIFETIME=3600" >> "$ENV_FILE"
   chmod 600 "$ENV_FILE"
   docker build -q --target runtime -t graph-mcp-gateway:runtime . >/dev/null
   docker build -q --target test -t graph-mcp-gateway:test . >/dev/null

@@ -4,28 +4,45 @@ mock モードの自動の E2E（`bash e2e/run.sh mock`）が全件通ってか�
 
 ## 社外の確認（Claude の API と、Entra ID・Graph の模擬）
 
-手元の PC で行う。`.env` に `OPENWEBUI_LLM_BASE_URL`・`OPENWEBUI_LLM_API_KEY`・`OPENWEBUI_LLM_MODEL`（Claude の API）を書いておく。
+手元の PC で行う。`.env` に `OPENWEBUI_LLM_BASE_URL`・`OPENWEBUI_LLM_API_KEY`・`OPENWEBUI_LLM_MODEL`（Claude の API）を書いておく。人がブラウザと AI ツールで、接続の確認画面と Entra ID の模擬のサインイン画面まで操作する。
 
-1. 起動する。Open WebUI の初期設定、確認用の参加者の作成、探して使う受け口の認可（模擬の Entra ID の alice）までが自動で行われる。
+- 公開のホスト名は `gateway.localhost`、Entra ID の模擬は `entra.localhost:9443`（`e2e/compose.offsite.yaml`）。macOS とブラウザは `*.localhost` を手元に向け、ブラウザはプロキシに通さないので、hosts の書き換えは要らない。
+- 証明書は手元の認証局（`e2e/.work/certs/ca.crt`）が発行したもの。ブラウザでは 3 か所（`gateway.localhost:8443`、`gateway.localhost`、`entra.localhost:9443`）で警告が出るので、承知のうえで進めるか、キーチェーンでこの認証局を信頼させる。
+- Entra ID の模擬のサインイン画面では利用者を選ぶ。`Alice Mock`・`Bob Mock` は通常の利用者、`Carol Mock` は割り当ての無い利用者（AADSTS50105 で拒否される）、`Dave Mock` は OBO が失敗する利用者（ツールの呼び出しが失敗する）。
+
+1. 起動する。Open WebUI の初期設定と、確認用の参加者のアカウントの作成までが自動で行われる（M365 のツールの認可はしない）。
 
    ```bash
    bash e2e/run.sh real-offsite
    ```
 
-2. ブラウザで `https://localhost:8443` を開く（受け口の証明書は `localhost` も含む。ブラウザは `localhost` をプロキシに通さないので、hosts の書き換えも要らない）。証明書は手元の認証局（`e2e/.work/certs/ca.crt`）が発行したものなので、信頼させるか、警告を承知のうえで進める。
-3. 起動の表示に出た参加者（`offsite@example.test`）でログインする。
-4. 新しいチャットでモデル「PoC アシスタント」を選び、ツール「Microsoft 365」を有効にする。
-5. 次を依頼し、結果を確かめる。
+2. Open WebUI で確かめる。
+   1. `https://gateway.localhost:8443` を開き、起動の表示に出た参加者（`offsite@example.test`）でログインする。
+   2. 新しいチャットでモデルが「PoC アシスタント」になっていることを確かめ、ツールのボタンで「Microsoft 365」を有効にする。
+   3. 認可を求める表示に従って進める。本システムの「接続の確認」画面で「Open WebUI」を許可し、Entra ID の模擬で `Alice Mock` を選ぶ。Open WebUI に戻ったら、ツールが有効になっていることを確かめる。
+   4. 次を依頼する。言語モデルは今日の日付を知らない（Open WebUI の自前のツールを外しているため）ので、日付ははっきり書く。
 
-   言語モデルは今日の日付を知らない（Open WebUI の自前のツールを外しているため）ので、日付ははっきり書く。
+      | 依頼 | 確かめること |
+      |---|---|
+      | 「2026 年 11 月 2 日〜8 日の予定を一覧にして」 | 言語モデルが「ツールを探す」でカレンダーのツールを探し、「引数を調べる」の後に「実行する」で予定の一覧のツールを呼ぶ。模擬の予定（2 件）が返る |
+      | 「2026 年 11 月 2 日 10 時（日本時間）に 30 分の打ち合わせを入れて」 | 予定を作るツールが呼ばれ、作成の結果（模擬の `mock-event-created`）が返る。模擬は状態を持たず決まった応答（11 月 4 日の「作成した予定」）を返すので、言語モデルが内容の食い違いを指摘しても問題ではない |
+      | （確認）チャットのモデルとツール | 既定のモデルが「PoC アシスタント」で、チャットの中のツールの呼び出しが `m365_` で始まる（Open WebUI の自前のカレンダーのツールではない） |
 
-   | 依頼 | 確かめること |
-   |---|---|
-   | 「2026 年 11 月 2 日〜8 日の予定を一覧にして」 | 言語モデルが「ツールを探す」でカレンダーのツールを探し、「引数を調べる」の後に「実行する」で予定の一覧のツールを呼ぶ。模擬の予定（2 件）が返る |
-   | 「2026 年 11 月 2 日 10 時（日本時間）に 30 分の打ち合わせを入れて」 | 予定を作るツールが呼ばれ、作成の結果（模擬の `mock-event-created`）が返る。模擬は状態を持たず決まった応答（11 月 4 日の「作成した予定」）を返すので、言語モデルが内容の食い違いを指摘しても問題ではない |
-   | （確認）チャットのモデル | 新しいチャットの既定のモデルが「PoC アシスタント」で、チャットの中のツールの呼び出しが `m365_` で始まる（Open WebUI の自前のカレンダーのツールではない） |
+3. Claude Code で確かめる（`docs/connect/claude-code.md` の手順を、社外の確認の値で行う）。
+   1. 新しい作業用のディレクトリで、手元の認証局を信頼させて受け口を登録する。
 
-6. 止める。
+      ```bash
+      export NODE_EXTRA_CA_CERTS=<このリポジトリ>/e2e/.work/certs/ca.crt
+      claude mcp add --transport http --scope local m365-full https://gateway.localhost/full/mcp
+      claude mcp add --transport http --scope local m365 https://gateway.localhost/discovery/mcp
+      claude
+      ```
+
+   2. Claude Code の中で `/mcp` を開き、`m365-full` と `m365` のそれぞれで認証を始める。ブラウザで「接続の確認」画面を許可し、Entra ID の模擬で `Alice Mock` を選ぶ。
+   3. 「M365 の自分のプロフィールを取得して」と頼み、`Alice Mock` のプロフィールが返ることを確かめる（探して使う受け口では、探す → 引数を調べる → 実行するの順に呼ぶ）。
+   4. 終わったら `claude mcp remove m365-full` と `claude mcp remove m365` で登録を消す。
+
+4. 止める。
 
    ```bash
    bash e2e/run.sh real-offsite stop

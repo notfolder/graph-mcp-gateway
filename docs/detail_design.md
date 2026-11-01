@@ -746,7 +746,7 @@ bash e2e/run.sh real-offsite
 
 ログは `e2e/.work/logs/` に保存する（コンテナを作り直すと前のログが消えるため、作り直す前に保存する。ms-365-mcp-server のログのファイルは `docker compose cp` で取り出す）。
 
-`e2e/run.sh real` は、`.env` の値（公開 URL、社内の認証局の証明書、利用者 B の ID など）を読み、手元で `uv run pytest e2e` を real モードで実行する。続けて `e2e/real-checklist.md` の手作業の手順（3 つの AI ツールと Open WebUI での確認、社内の言語モデルでの確認）を行う。`e2e/run.sh real-offsite` は、mock モードの構成のうち言語モデルの模擬の代わりに `.env` の言語モデル（Claude の API）を使って起動し、Open WebUI での本物の言語モデルの確認を `e2e/real-checklist.md` の手順で行う。
+`e2e/run.sh real` は、`.env` の値（公開 URL、社内の認証局の証明書、利用者 B の ID など）を読み、手元で `uv run pytest e2e` を real モードで実行する。続けて `e2e/real-checklist.md` の手作業の手順（3 つの AI ツールと Open WebUI での確認、社内の言語モデルでの確認）を行う。`e2e/run.sh real-offsite` は、mock モードの構成のうち言語モデルの模擬の代わりに `.env` の言語モデル（Claude の API）を使って起動し、Open WebUI での本物の言語モデルの確認を `e2e/real-checklist.md` の手順で行う。人が手元のブラウザと AI ツールで接続の確認画面と Entra ID の模擬のサインイン画面まで操作できるよう、公開のホスト名を `gateway.localhost`、Entra ID の模擬を `entra.localhost:9443`（ホストに公開する）にする（`e2e/compose.offsite.yaml`。macOS とブラウザは `*.localhost` を手元に向け、ブラウザはプロキシに通さない。コンテナの中では Open WebUI の名前解決が `*.localhost` を自分自身に向けるので、受け口と Entra ID の模擬に固定の IP を付けて、呼ぶ側のコンテナの hosts に書く）。
 
 - テストの資産はプロジェクト直下の `e2e/` に置く。外部の模擬は `external/*/mock/` が正本で、`e2e/mocks/` からシンボリックリンクで参照する（リンクも Git で管理する）。
 - テスト環境を作るスクリプトは bash で書き、HTML の解析、トークンの探索、処理量の集計などは Python で書く。

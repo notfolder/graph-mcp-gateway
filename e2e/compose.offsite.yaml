@@ -1,0 +1,49 @@
+# 社外の確認（bash e2e/run.sh real-offsite）で compose.yaml と e2e/compose.mock.yaml に重ねる追加ファイル。
+# 人が手元のブラウザと AI ツール（Claude Code など）で、Entra ID の模擬のサインイン画面まで操作できるようにする。
+#
+# - 公開のホスト名は gateway.localhost、Entra ID の模擬は entra.localhost:9443。macOS とブラウザは *.localhost を
+#   手元（ループバック）に向け、ブラウザはプロキシに通さないので、hosts の書き換えは要らない。
+# - コンテナの中では、*.localhost を自分自身に向ける名前解決（Open WebUI の aiohttp が使う c-ares）があるので、
+#   受け口と Entra ID の模擬に固定の IP を付け、呼ぶ側のコンテナの /etc/hosts に書く。
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.31.250.0/24
+
+services:
+  gateway:
+    networks:
+      default:
+        ipv4_address: 172.31.250.10
+
+  mock-entra:
+    ports:
+      - "9443:9443"
+    environment:
+      MOCK_PORT: "9443"
+    networks:
+      default:
+        ipv4_address: 172.31.250.11
+        aliases:
+          - entra.localhost
+    healthcheck:
+      test: ["CMD", "python", "-c", "import ssl, urllib.request; urllib.request.urlopen('https://127.0.0.1:9443/${APP_TENANT_ID}/discovery/v2.0/keys', context=ssl._create_unverified_context(), timeout=3)"]
+
+  relay-full:
+    extra_hosts:
+      - "entra.localhost:172.31.250.11"
+
+  relay-discovery:
+    extra_hosts:
+      - "entra.localhost:172.31.250.11"
+
+  open-webui:
+    extra_hosts:
+      - "gateway.localhost:172.31.250.10"
+
+  e2e:
+    extra_hosts:
+      - "gateway.localhost:172.31.250.10"
+      - "entra.localhost:172.31.250.11"
