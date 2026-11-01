@@ -3,6 +3,9 @@
 - 確認日：2026-10-31
 - 調査レポート：`external/microsoft-graph/docs/research.md`
 
+> **2026-11-01 の方針変更による注意**：本システムは MCP のツールを自作せず、Graph を呼ぶのは既製の ms-365-mcp-server になった。本書のうち、自作のツールの一覧・業務ルール・データ項目との突き合わせ、httpx2 の連携ライブラリ（`graph_api/`。使わなくなったので 2026-11-01 に消した）の選定は、今の要件には当てはまらない。Graph の API の仕様と制限（認証、スロットリング、ページング、エラー）の記述は引き続き有効。ms-365-mcp-server が送る要求と、作り直した模擬は `external/ms-365-mcp-server/docs/research.md` と `../mock/README.md` を見る。
+
+
 ## 1. 入力した要件
 
 `docs/requirements.md`（新規の要件定義書。isdd 形式、整合チェック合格済み）

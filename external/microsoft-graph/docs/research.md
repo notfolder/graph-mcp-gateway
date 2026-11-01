@@ -5,6 +5,9 @@
 - 事前確認：`external/microsoft-graph/docs/precheck_report.md`
 - 調べ方：Graph v1.0 の API リファレンスを、元の公開リポジトリ（`microsoftgraph/microsoft-graph-docs-contrib`、2026-10-31 時点の main）で読んだ。FastMCP 4.1.4、httpx2・httpcore2 2.16.0、azure-identity 1.27.0 は配布物を展開してソースで確かめた。実接続はテナントが無いため行っていない。
 
+> **2026-11-01 の方針変更による注意**：本システムは MCP のツールを自作せず、Graph を呼ぶのは既製の ms-365-mcp-server になった。本書のうち、自作のツールの一覧・業務ルール・データ項目との突き合わせ、httpx2 の連携ライブラリ（`graph_api/`。使わなくなったので 2026-11-01 に消した）の選定は、今の要件には当てはまらない。Graph の API の仕様と制限（認証、スロットリング、ページング、エラー）の記述は引き続き有効。ms-365-mcp-server が送る要求と、作り直した模擬は `external/ms-365-mcp-server/docs/research.md` と `../mock/README.md` を見る。
+
+
 ## 1. システム概要
 
 | 項目 | 内容 |

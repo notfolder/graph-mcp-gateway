@@ -1,6 +1,7 @@
 # 社内共有 M365 MCP サーバー 関連資料（依頼資料・OAuth プロキシ仕様）
 
 - 作成日：2026-10-31
+- 改訂：2026-11-01（MCP のツールを自作せず、既製の ms-365-mcp-server を FastMCP の OAuth プロキシの後ろに置く方針に合わせて、「自作」の言い方と、Entra ID の戻り先が 2 件になることを直した。経緯は要件定義書 1 章「経緯」）
 
 本書は、要件仕様書・設計書で参照している次の2つの資料を1つにまとめたものです。
 
@@ -22,7 +23,7 @@
 
 ### 1. 目的
 
-社内に共有の MCP サーバーを1台置き、社員が **Claude Code・Codex・OpenCode** から自分のメール・予定表・SharePoint/OneDrive・Teams の情報を読み書きできるかを PoC で確認します。
+社内に共有の MCP サーバーを1台置き、社員が **Claude Code・Codex・OpenCode**、および PoC 専用の **Open WebUI**（ブラウザで使う会話の画面）から、自分のメール・予定表・SharePoint/OneDrive・Excel・Teams などの情報を読み書きできるかを PoC で確認します。
 
 - 各利用者は **自分の Entra ID でサインイン**し、**本人の権限の範囲のデータだけ**を扱います（委任アクセス）。
 - 利用者に鍵（APIキーなど）は配布しません。
@@ -35,7 +36,7 @@
 | 範囲 | 担当 |
 |---|---|
 | Entra ID のアプリ登録、API 権限、管理者同意、利用者の割り当て | **貴部署**（本書でご依頼する範囲） |
-| 共有 MCP サーバー（FastMCP で自作）の構築・運用、Claude Code・Codex・OpenCode の利用手順 | 当部署 |
+| 共有 MCP サーバー（FastMCP の OAuth プロキシと、既製の MCP サーバー ms-365-mcp-server の組み合わせ）の構築・運用、Claude Code・Codex・OpenCode・PoC 専用の Open WebUI の利用手順 | 当部署 |
 
 ---
 
@@ -48,6 +49,7 @@
 | MCP サーバー | AI ツールに機能（例：メールを検索する）を提供するサーバー。今回は社内に1台置いて全員で共有する |
 | FastMCP | MCP サーバーを作るためのオープンソースのライブラリ（Python、Apache 2.0 ライセンス）。Entra ID と連携するための部品（`AzureProvider`）を持つ |
 | OAuth プロキシ | MCP サーバーの入口で、Entra ID へのサインインを仲介する仕組み。FastMCP に組み込まれている |
+| ms-365-mcp-server | Microsoft Graph を呼ぶ MCP のツールを提供する、既製のオープンソースの MCP サーバー（Node.js、MIT ライセンス）。OAuth プロキシの後ろの社内ネットワークにだけ置き、利用者本人の Graph 用のトークンを受け取って Graph を呼ぶ |
 | 委任アクセス | アプリが「サインインした利用者本人として」データにアクセスする方式。本人に権限のないデータは見えない |
 | OBO（On-Behalf-Of） | サーバーが、利用者のトークンを Entra ID に提示して、Graph 用のトークンに交換する仕組み。利用者本人としてのアクセスのまま |
 | 管理者同意 | 組織全体として、アプリに権限を与えることを管理者が承認する操作 |
@@ -64,21 +66,21 @@ flowchart LR
   end
   subgraph OURS["社内（当部署）"]
     PX["OAuthプロキシ<br/>（FastMCP）"]
-    TL["MCPツール<br/>（メール・予定表・ファイル・Teams）"]
+    TL["MCPツール<br/>既製のms-365-mcp-server"]
   end
   subgraph MS["Microsoft クラウド（貴部署管理）"]
     EN["Entra ID"]
     GR["Microsoft Graph"]
   end
   CC -->|"① MCPサーバーが発行したトークン"| PX
-  PX <-->|"② サインイン・同意<br/>戻り先は {サーバーURL}/auth/callback の1件"| EN
+  PX <-->|"② サインイン・同意<br/>戻り先は受け口ごとの /auth/callback の2件"| EN
   PX --> TL
   TL -->|"③ OBOで得た利用者本人のGraphトークン"| GR
 ```
 
 **ポイント**
 
-- Entra ID に登録する戻り先（リダイレクト URI）は、**MCP サーバーの URL 1件だけ**です。利用者の PC 側の戻り先（Claude Code・Codex・OpenCode がそれぞれ使う localhost / 127.0.0.1 のアドレス）は MCP サーバーとの間だけで使われるため、Entra ID への登録は不要です。利用する AI ツールを追加しても、Entra ID 側のリダイレクト URI の変更は発生しません。
+- Entra ID に登録する戻り先（リダイレクト URI）は、**MCP サーバーの受け口 2 つ分の 2 件だけ**です（ツールを全部見せる受け口と、探して使う受け口。PoC で使い勝手を比べるため）。利用者の PC 側の戻り先（Claude Code・Codex・OpenCode がそれぞれ使う localhost / 127.0.0.1 のアドレス）は MCP サーバーとの間だけで使われるため、Entra ID への登録は不要です。利用する AI ツールを追加しても、Entra ID 側のリダイレクト URI の変更は発生しません。
 - Graph 用のトークンは MCP サーバーの中で取得・使用し、**利用者の PC には渡りません**。各ツールが持つのは、MCP サーバーが発行したトークンだけです。
 - Graph へのアクセスは利用者本人としての委任アクセスです。本人に権限のないデータは取得できません。
 
@@ -161,14 +163,15 @@ sequenceDiagram
 | 名前 | 任意（例：社内 M365 MCP サーバー（PoC））※名前は貴部署の命名規則に合わせてください |
 | サポートされているアカウントの種類 | この組織ディレクトリのみに含まれるアカウント（シングル テナント） |
 | リダイレクト URI ＞ プラットフォームの選択 | Web |
-| リダイレクト URI ＞ 値 | `https://{サーバーURL}/auth/callback` |
+| リダイレクト URI ＞ 値 | `https://{サーバーURL}/full/auth/callback`（2 件目の `https://{サーバーURL}/discovery/auth/callback` は、登録の後に「認証」メニューで追加） |
 
 ［登録］を押すと、アプリが作成されます。同時に、同じ名前のエンタープライズ アプリケーションも自動で作成されます（P-7 で使います）。
 
 **補足**
 
 - サーバー URL は未定です。決まり次第ご連絡しますので、リダイレクト URI はその時点で設定いただいても構いません（後から「認証」メニューで追加できます）。
-- リダイレクト URI は、この **1件だけ** です。利用者の PC の AI ツール（Claude Code・Codex・OpenCode）の分は登録不要です（4章のとおり）。
+- リダイレクト URI は、この **2件だけ** です。利用者の PC の AI ツール（Claude Code・Codex・OpenCode）と PoC 専用の Open WebUI の分は登録不要です（4章のとおり）。
+- パス（`/full`、`/discovery`）は設計で決める値の案です。確定したら URL と合わせてご連絡します。
 
 ---
 
@@ -320,11 +323,11 @@ sequenceDiagram
 
 | No. | 内容 |
 |---|---|
-| O-1 | MCP サーバーの URL を決め、リダイレクト URI としてご連絡する |
+| O-1 | MCP サーバーの URL を決め、リダイレクト URI（2 件）としてご連絡する |
 | O-2 | API の公開で使うスコープ名をご提示する |
 | O-3 | PoC 参加者の一覧をご提示する |
-| O-4 | FastMCP で MCP サーバーとツール（メール・予定表・SharePoint/OneDrive・Teams の読み書き）を構築する |
-| O-5 | Claude Code・Codex・OpenCode からの接続手順を作成し、PoC 参加者に案内する |
+| O-4 | FastMCP の OAuth プロキシと既製の ms-365-mcp-server を組み合わせて、MCP サーバー（メール・予定表・SharePoint/OneDrive・Excel・Teams などの読み書き）を構築する |
+| O-5 | Claude Code・Codex・OpenCode・PoC 専用の Open WebUI からの接続手順を作成し、PoC 参加者に案内する |
 | O-6 | PoC の結果をまとめ、本番化の要否とご依頼内容を改めてご相談する |
 
 ---
@@ -369,11 +372,11 @@ flowchart TD
 OAuth プロキシは、社内共有 MCP サーバーの入口で次の役割を担います。
 
 1. AI ツール（Claude Code・Codex・OpenCode）に対して **OAuth の認可サーバー** として振る舞い、利用者に鍵を配らずに接続させる。
-2. 利用者のサインインを **Entra ID に中継** する（Entra ID に登録する戻り先は MCP サーバーの1件だけ）。
+2. 利用者のサインインを **Entra ID に中継** する（Entra ID に登録する戻り先は、MCP の受け口 2 つ分の 2 件だけ）。
 3. **独自のトークン** を AI ツールに発行し、Entra ID や Graph のトークンは AI ツールに渡さない。
-4. ツールの呼び出し時に、利用者の Entra トークンを **OBO で Graph 用トークンに交換** し、利用者本人として Graph を呼ぶ。
+4. ツールの呼び出しを中継するときに、利用者の Entra トークンを **OBO で Graph 用トークンに交換** し、それを付けて既製の ms-365-mcp-server に渡す。ms-365-mcp-server が利用者本人として Graph を呼ぶ。
 
-FastMCP では、OAuth プロキシと MCP ツールは **同じプロセスの中** で動きます（別製品・別サーバーではありません）。
+2026-11-01 の改訂：当初の版は、FastMCP の中で MCP ツールを自作する前提で書いていました。現在は、OAuth プロキシと中継は FastMCP、ツールは既製の ms-365-mcp-server（社内ネットワークにだけ置く別のコンテナ）です。以下の各章の「ツール」「`EntraOBOToken`」の記述は、中継の中で OBO を行う形に読み替えてください（詳細は詳細設計書）。
 
 ---
 
@@ -382,13 +385,13 @@ FastMCP では、OAuth プロキシと MCP ツールは **同じプロセスの�
 | 項目 | 内容 |
 |---|---|
 | 方式 | 社内に共有の HTTP MCP サーバーを置き、全員で使う |
-| 実装 | FastMCP（Python、Apache 2.0）で自作。認証は `AzureProvider`、Graph 呼び出しは `EntraOBOToken` |
+| 実装 | FastMCP（Python、Apache 2.0）の OAuth プロキシ（`AzureProvider`）と中継。ツールは既製の ms-365-mcp-server（Node.js、MIT）。中継のたびに OBO で Graph 用トークンを得て渡す |
 | 認証 | Entra ID の委任アクセス（利用者本人として Graph を呼ぶ） |
 | 利用者への鍵配布 | しない |
-| 対象の AI ツール | Claude Code・Codex・OpenCode |
+| 対象の AI ツール | Claude Code・Codex・OpenCode・PoC 専用の Open WebUI |
 | 対象データ | メール、予定表、SharePoint/OneDrive、Teams（読み取り・書き込み）。他は PoC で追加を検討 |
 | PoC の利用者 | Entra ID の「割り当てが必要」で指定者に限定 |
-| Entra ID のアプリ | シングルテナント、Web プラットフォーム、リダイレクト URI は `{サーバーURL}/auth/callback` の1件 |
+| Entra ID のアプリ | シングルテナント、Web プラットフォーム、リダイレクト URI は MCP の受け口ごとの `{base_url}/auth/callback` の 2 件 |
 
 ---
 
@@ -433,7 +436,7 @@ flowchart LR
 | `/.well-known/oauth-protected-resource` ほか | MCP サーバー（保護リソース）のメタデータ | AI ツール |
 | `/register` | 動的クライアント登録（DCR） | AI ツール |
 | `/authorize` | 認可の開始。接続の確認画面を表示し、Entra ID に転送 | 利用者のブラウザ |
-| `/auth/callback`（`redirect_path` の既定値） | Entra ID からの戻り先。**Entra ID に登録するのはこの1件** | Entra ID（ブラウザ経由） |
+| `/auth/callback`（`redirect_path` の既定値） | Entra ID からの戻り先。**Entra ID に登録するのは、受け口ごとのこのパスの 2 件** | Entra ID（ブラウザ経由） |
 | `/token` | FastMCP トークンの発行・更新 | AI ツール |
 | `/mcp`（MCP の受け口） | ツールの呼び出し。FastMCP トークンが必要 | AI ツール |
 
@@ -567,12 +570,12 @@ sequenceDiagram
 | 依頼資料 | Entra ID の設定 | FastMCP の設定 |
 |---|---|---|
 | P-1 | テナント ID | `tenant_id`（特定のテナント ID を指定。`common` は新規アプリで不可） |
-| P-1 | リダイレクト URI `{サーバーURL}/auth/callback` | `base_url`＋`redirect_path`（既定 `/auth/callback`）。**完全一致が必要** |
+| P-1 | リダイレクト URI（受け口ごとの 2 件） | 受け口ごとの `base_url`＋`redirect_path`（既定 `/auth/callback`）。**完全一致が必要** |
 | P-2 | アプリケーション ID の URI `api://{client_id}` | `identifier_uri`（既定 `api://{client_id}`） |
 | P-2 | スコープ | `required_scopes`（接頭辞なしの名前で指定） |
 | P-3 | `requestedAccessTokenVersion: 2` | 前提条件（v2 トークンを検証） |
 | P-4 | クライアントシークレット | `client_secret` |
-| P-5 | Graph の委任権限 | `additional_authorize_scopes`、各ツールの `EntraOBOToken([...])` |
+| P-5 | Graph の委任権限 | `additional_authorize_scopes`、中継の中での OBO（`get_obo_credential`） |
 | P-6 | 管理者の同意 | 前提条件（ないと OBO が AADSTS65001 で失敗） |
 | P-8 | クライアント ID | `client_id` |
 

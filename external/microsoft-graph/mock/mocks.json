@@ -17,10 +17,10 @@
         "body": {
           "error": {
             "code": "InvalidAuthenticationToken",
-            "message": "Mock error",
+            "message": "Mock error (InvalidAuthenticationToken)",
             "innerError": {
               "request-id": "00000000-0000-0000-0000-000000000000",
-              "date": "2026-10-31T00:00:00"
+              "date": "2026-11-01T00:00:00"
             }
           }
         }
@@ -42,85 +42,10 @@
         "body": {
           "error": {
             "code": "ErrorAccessDenied",
-            "message": "Mock error",
+            "message": "Mock error (ErrorAccessDenied)",
             "innerError": {
               "request-id": "00000000-0000-0000-0000-000000000000",
-              "date": "2026-10-31T00:00:00"
-            }
-          }
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/messages/mock-other-user*",
-        "method": "GET"
-      },
-      "response": {
-        "statusCode": 403,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "error": {
-            "code": "ErrorAccessDenied",
-            "message": "Mock error",
-            "innerError": {
-              "request-id": "00000000-0000-0000-0000-000000000000",
-              "date": "2026-10-31T00:00:00"
-            }
-          }
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/events/mock-other-user*",
-        "method": "GET"
-      },
-      "response": {
-        "statusCode": 403,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "error": {
-            "code": "ErrorAccessDenied",
-            "message": "Mock error",
-            "innerError": {
-              "request-id": "00000000-0000-0000-0000-000000000000",
-              "date": "2026-10-31T00:00:00"
-            }
-          }
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/chats/mock-other-user*",
-        "method": "GET"
-      },
-      "response": {
-        "statusCode": 403,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "error": {
-            "code": "Forbidden",
-            "message": "Mock error",
-            "innerError": {
-              "request-id": "00000000-0000-0000-0000-000000000000",
-              "date": "2026-10-31T00:00:00"
+              "date": "2026-11-01T00:00:00"
             }
           }
         }
@@ -142,10 +67,10 @@
         "body": {
           "error": {
             "code": "ErrorItemNotFound",
-            "message": "Mock error",
+            "message": "Mock error (ErrorItemNotFound)",
             "innerError": {
               "request-id": "00000000-0000-0000-0000-000000000000",
-              "date": "2026-10-31T00:00:00"
+              "date": "2026-11-01T00:00:00"
             }
           }
         }
@@ -172,10 +97,10 @@
         "body": {
           "error": {
             "code": "TooManyRequests",
-            "message": "Mock error",
+            "message": "Mock error (TooManyRequests)",
             "innerError": {
               "request-id": "00000000-0000-0000-0000-000000000000",
-              "date": "2026-10-31T00:00:00"
+              "date": "2026-11-01T00:00:00"
             }
           }
         }
@@ -195,24 +120,29 @@
           }
         ],
         "body": {
-          "id": "mock-msg-9",
-          "subject": "再試行の後に取得できたメール",
+          "id": "mock-429-then-ok",
+          "subject": "429 の後に成功",
           "from": {
             "emailAddress": {
-              "name": "Alice Mock",
-              "address": "alice@contoso.test"
+              "name": "Bob Mock",
+              "address": "bob@contoso.test"
             }
           },
-          "receivedDateTime": "2026-10-31T09:00:00Z",
+          "toRecipients": [
+            {
+              "emailAddress": {
+                "name": "Alice Mock",
+                "address": "alice@contoso.test"
+              }
+            }
+          ],
+          "receivedDateTime": "2026-10-31T01:00:00Z",
           "isRead": false,
-          "flag": {
-            "flagStatus": "notFlagged"
-          },
           "hasAttachments": false,
-          "bodyPreview": "本文の冒頭 9",
+          "bodyPreview": "本文の冒頭 1",
           "body": {
             "contentType": "text",
-            "content": "本文 9"
+            "content": "本文 1"
           }
         }
       }
@@ -237,10 +167,10 @@
         "body": {
           "error": {
             "code": "TooManyRequests",
-            "message": "Mock error",
+            "message": "Mock error (TooManyRequests)",
             "innerError": {
               "request-id": "00000000-0000-0000-0000-000000000000",
-              "date": "2026-10-31T00:00:00"
+              "date": "2026-11-01T00:00:00"
             }
           }
         }
@@ -266,10 +196,194 @@
         "body": {
           "error": {
             "code": "ServiceUnavailable",
-            "message": "Mock error",
+            "message": "Mock error (ServiceUnavailable)",
             "innerError": {
               "request-id": "00000000-0000-0000-0000-000000000000",
-              "date": "2026-10-31T00:00:00"
+              "date": "2026-11-01T00:00:00"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "url": "https://graph.microsoft.com/v1.0/me/sendMail",
+        "method": "POST",
+        "bodyFragment": "mock-503"
+      },
+      "response": {
+        "statusCode": 503,
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "name": "Retry-After",
+            "value": "1"
+          }
+        ],
+        "body": {
+          "error": {
+            "code": "ServiceUnavailable",
+            "message": "Mock error (ServiceUnavailable)",
+            "innerError": {
+              "request-id": "00000000-0000-0000-0000-000000000000",
+              "date": "2026-11-01T00:00:00"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "url": "https://graph.microsoft.com/v1.0/chats/mock-503/messages",
+        "method": "POST"
+      },
+      "response": {
+        "statusCode": 503,
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "name": "Retry-After",
+            "value": "1"
+          }
+        ],
+        "body": {
+          "error": {
+            "code": "ServiceUnavailable",
+            "message": "Mock error (ServiceUnavailable)",
+            "innerError": {
+              "request-id": "00000000-0000-0000-0000-000000000000",
+              "date": "2026-11-01T00:00:00"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "url": "https://graph.microsoft.com/v1.0/me/messages/mock-other-user*",
+        "method": "GET"
+      },
+      "response": {
+        "statusCode": 403,
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "error": {
+            "code": "ErrorAccessDenied",
+            "message": "Mock error (ErrorAccessDenied)",
+            "innerError": {
+              "request-id": "00000000-0000-0000-0000-000000000000",
+              "date": "2026-11-01T00:00:00"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "url": "https://graph.microsoft.com/v1.0/me/events/mock-other-user*",
+        "method": "GET"
+      },
+      "response": {
+        "statusCode": 403,
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "error": {
+            "code": "ErrorAccessDenied",
+            "message": "Mock error (ErrorAccessDenied)",
+            "innerError": {
+              "request-id": "00000000-0000-0000-0000-000000000000",
+              "date": "2026-11-01T00:00:00"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "url": "https://graph.microsoft.com/v1.0/chats/mock-other-user/*",
+        "method": "GET"
+      },
+      "response": {
+        "statusCode": 403,
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "error": {
+            "code": "Forbidden",
+            "message": "Mock error (Forbidden)",
+            "innerError": {
+              "request-id": "00000000-0000-0000-0000-000000000000",
+              "date": "2026-11-01T00:00:00"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "url": "https://graph.microsoft.com/v1.0/chats/mock-other-user/*",
+        "method": "POST"
+      },
+      "response": {
+        "statusCode": 403,
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "error": {
+            "code": "Forbidden",
+            "message": "Mock error (Forbidden)",
+            "innerError": {
+              "request-id": "00000000-0000-0000-0000-000000000000",
+              "date": "2026-11-01T00:00:00"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "url": "https://graph.microsoft.com/v1.0/drives/mock-other-user/*",
+        "method": "GET"
+      },
+      "response": {
+        "statusCode": 403,
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "error": {
+            "code": "accessDenied",
+            "message": "Mock error (accessDenied)",
+            "innerError": {
+              "request-id": "00000000-0000-0000-0000-000000000000",
+              "date": "2026-11-01T00:00:00"
             }
           }
         }
@@ -314,371 +428,8 @@
           "id": "aaaaaaaa-0000-0000-0000-000000000001",
           "displayName": "Alice Mock",
           "mail": "alice@contoso.test",
-          "userPrincipalName": "alice@contoso.test"
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/mailFolders/mock-folder-inbox/childFolders*",
-        "method": "GET"
-      },
-      "response": {
-        "statusCode": 200,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "value": [
-            {
-              "id": "mock-folder-sub",
-              "displayName": "案件 A",
-              "parentFolderId": "mock-folder-inbox",
-              "childFolderCount": 0,
-              "unreadItemCount": 1,
-              "totalItemCount": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/mailFolders?*skip*",
-        "method": "GET"
-      },
-      "response": {
-        "statusCode": 200,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "value": [
-            {
-              "id": "mock-folder-archive",
-              "displayName": "アーカイブ",
-              "parentFolderId": "mock-root",
-              "childFolderCount": 0,
-              "unreadItemCount": 1,
-              "totalItemCount": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/mailFolders/*/messages*",
-        "method": "GET"
-      },
-      "response": {
-        "statusCode": 200,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "value": [
-            {
-              "id": "mock-msg-1",
-              "subject": "フォルダー内のメール",
-              "from": {
-                "emailAddress": {
-                  "name": "Alice Mock",
-                  "address": "alice@contoso.test"
-                }
-              },
-              "receivedDateTime": "2026-10-31T01:00:00Z",
-              "isRead": false,
-              "flag": {
-                "flagStatus": "notFlagged"
-              },
-              "hasAttachments": true,
-              "bodyPreview": "本文の冒頭 1",
-              "body": {
-                "contentType": "text",
-                "content": "本文 1"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/mailFolders*",
-        "method": "GET"
-      },
-      "response": {
-        "statusCode": 200,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "value": [
-            {
-              "id": "mock-folder-inbox",
-              "displayName": "受信トレイ",
-              "parentFolderId": "mock-root",
-              "childFolderCount": 1,
-              "unreadItemCount": 1,
-              "totalItemCount": 3
-            },
-            {
-              "id": "mock-folder-sent",
-              "displayName": "送信済みアイテム",
-              "parentFolderId": "mock-root",
-              "childFolderCount": 0,
-              "unreadItemCount": 1,
-              "totalItemCount": 3
-            }
-          ],
-          "@odata.nextLink": "https://graph.microsoft.com/v1.0/me/mailFolders?%24top=2&%24skip=2"
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/messages/mock-msg-1/attachments*",
-        "method": "GET"
-      },
-      "response": {
-        "statusCode": 200,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "value": [
-            {
-              "id": "mock-att-1",
-              "name": "見積.pdf",
-              "contentType": "application/pdf",
-              "size": 12345
-            }
-          ]
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/messages/*/send",
-        "method": "POST"
-      },
-      "response": {
-        "statusCode": 202,
-        "headers": []
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/messages/*/reply",
-        "method": "POST"
-      },
-      "response": {
-        "statusCode": 202,
-        "headers": []
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/messages/*/replyAll",
-        "method": "POST"
-      },
-      "response": {
-        "statusCode": 202,
-        "headers": []
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/messages/*/forward",
-        "method": "POST"
-      },
-      "response": {
-        "statusCode": 202,
-        "headers": []
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/messages/*/move",
-        "method": "POST"
-      },
-      "response": {
-        "statusCode": 201,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "id": "mock-msg-1-moved",
-          "subject": "移動したメール",
-          "from": {
-            "emailAddress": {
-              "name": "Alice Mock",
-              "address": "alice@contoso.test"
-            }
-          },
-          "receivedDateTime": "2026-10-31T01:00:00Z",
-          "isRead": false,
-          "flag": {
-            "flagStatus": "notFlagged"
-          },
-          "hasAttachments": true,
-          "bodyPreview": "本文の冒頭 1",
-          "body": {
-            "contentType": "text",
-            "content": "本文 1"
-          }
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/messages/*",
-        "method": "PATCH"
-      },
-      "response": {
-        "statusCode": 200,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "id": "mock-msg-1",
-          "subject": "更新したメール",
-          "from": {
-            "emailAddress": {
-              "name": "Alice Mock",
-              "address": "alice@contoso.test"
-            }
-          },
-          "receivedDateTime": "2026-10-31T01:00:00Z",
-          "isRead": false,
-          "flag": {
-            "flagStatus": "notFlagged"
-          },
-          "hasAttachments": true,
-          "bodyPreview": "本文の冒頭 1",
-          "body": {
-            "contentType": "text",
-            "content": "本文 1"
-          }
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/messages/*",
-        "method": "DELETE"
-      },
-      "response": {
-        "statusCode": 204,
-        "headers": []
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/messages",
-        "method": "POST"
-      },
-      "response": {
-        "statusCode": 201,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "id": "mock-draft-1",
-          "subject": "下書き",
-          "from": {
-            "emailAddress": {
-              "name": "Alice Mock",
-              "address": "alice@contoso.test"
-            }
-          },
-          "receivedDateTime": "2026-10-31T05:00:00Z",
-          "isRead": false,
-          "flag": {
-            "flagStatus": "notFlagged"
-          },
-          "hasAttachments": false,
-          "bodyPreview": "本文の冒頭 5",
-          "body": {
-            "contentType": "text",
-            "content": "本文 5"
-          },
-          "isDraft": true
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/sendMail",
-        "method": "POST"
-      },
-      "response": {
-        "statusCode": 202,
-        "headers": []
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/messages?*skip*",
-        "method": "GET"
-      },
-      "response": {
-        "statusCode": 200,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "value": [
-            {
-              "id": "mock-msg-3",
-              "subject": "3 通目",
-              "from": {
-                "emailAddress": {
-                  "name": "Alice Mock",
-                  "address": "alice@contoso.test"
-                }
-              },
-              "receivedDateTime": "2026-10-31T03:00:00Z",
-              "isRead": false,
-              "flag": {
-                "flagStatus": "notFlagged"
-              },
-              "hasAttachments": false,
-              "bodyPreview": "本文の冒頭 3",
-              "body": {
-                "contentType": "text",
-                "content": "本文 3"
-              }
-            }
-          ]
+          "userPrincipalName": "alice@contoso.test",
+          "jobTitle": "PoC 参加者"
         }
       }
     },
@@ -697,19 +448,24 @@
         ],
         "body": {
           "id": "mock-msg-1",
-          "subject": "見積の件",
+          "subject": "1 通目",
           "from": {
             "emailAddress": {
-              "name": "Alice Mock",
-              "address": "alice@contoso.test"
+              "name": "Bob Mock",
+              "address": "bob@contoso.test"
             }
           },
+          "toRecipients": [
+            {
+              "emailAddress": {
+                "name": "Alice Mock",
+                "address": "alice@contoso.test"
+              }
+            }
+          ],
           "receivedDateTime": "2026-10-31T01:00:00Z",
           "isRead": false,
-          "flag": {
-            "flagStatus": "notFlagged"
-          },
-          "hasAttachments": true,
+          "hasAttachments": false,
           "bodyPreview": "本文の冒頭 1",
           "body": {
             "contentType": "text",
@@ -720,7 +476,52 @@
     },
     {
       "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/messages*",
+        "url": "https://graph.microsoft.com/v1.0/me/messages?*skiptoken=mock-page-2*",
+        "method": "GET"
+      },
+      "response": {
+        "statusCode": 200,
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "value": [
+            {
+              "id": "mock-msg-3",
+              "subject": "3 通目",
+              "from": {
+                "emailAddress": {
+                  "name": "Bob Mock",
+                  "address": "bob@contoso.test"
+                }
+              },
+              "toRecipients": [
+                {
+                  "emailAddress": {
+                    "name": "Alice Mock",
+                    "address": "alice@contoso.test"
+                  }
+                }
+              ],
+              "receivedDateTime": "2026-10-31T03:00:00Z",
+              "isRead": false,
+              "hasAttachments": false,
+              "bodyPreview": "本文の冒頭 3",
+              "body": {
+                "contentType": "text",
+                "content": "本文 3"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "url": "https://graph.microsoft.com/v1.0/me/messages?*",
         "method": "GET"
       },
       "response": {
@@ -735,19 +536,24 @@
           "value": [
             {
               "id": "mock-msg-1",
-              "subject": "見積の件",
+              "subject": "1 通目",
               "from": {
                 "emailAddress": {
-                  "name": "Alice Mock",
-                  "address": "alice@contoso.test"
+                  "name": "Bob Mock",
+                  "address": "bob@contoso.test"
                 }
               },
+              "toRecipients": [
+                {
+                  "emailAddress": {
+                    "name": "Alice Mock",
+                    "address": "alice@contoso.test"
+                  }
+                }
+              ],
               "receivedDateTime": "2026-10-31T01:00:00Z",
               "isRead": false,
-              "flag": {
-                "flagStatus": "notFlagged"
-              },
-              "hasAttachments": true,
+              "hasAttachments": false,
               "bodyPreview": "本文の冒頭 1",
               "body": {
                 "contentType": "text",
@@ -756,18 +562,23 @@
             },
             {
               "id": "mock-msg-2",
-              "subject": "打ち合わせの件",
+              "subject": "2 通目",
               "from": {
                 "emailAddress": {
-                  "name": "Alice Mock",
-                  "address": "alice@contoso.test"
+                  "name": "Bob Mock",
+                  "address": "bob@contoso.test"
                 }
               },
-              "receivedDateTime": "2026-10-30T02:00:00Z",
-              "isRead": true,
-              "flag": {
-                "flagStatus": "notFlagged"
-              },
+              "toRecipients": [
+                {
+                  "emailAddress": {
+                    "name": "Alice Mock",
+                    "address": "alice@contoso.test"
+                  }
+                }
+              ],
+              "receivedDateTime": "2026-10-31T02:00:00Z",
+              "isRead": false,
               "hasAttachments": false,
               "bodyPreview": "本文の冒頭 2",
               "body": {
@@ -776,13 +587,13 @@
               }
             }
           ],
-          "@odata.nextLink": "https://graph.microsoft.com/v1.0/me/messages?%24top=2&%24skip=2"
+          "@odata.nextLink": "https://graph.microsoft.com/v1.0/me/messages?$top=2&$skiptoken=mock-page-2"
         }
       }
     },
     {
       "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/calendarView?*skip*",
+        "url": "https://graph.microsoft.com/v1.0/me/messages",
         "method": "GET"
       },
       "response": {
@@ -796,39 +607,355 @@
         "body": {
           "value": [
             {
-              "id": "mock-event-3",
-              "subject": "会議 3",
-              "start": {
-                "dateTime": "2026-11-03T01:00:00.0000000",
-                "timeZone": "UTC"
-              },
-              "end": {
-                "dateTime": "2026-11-03T02:00:00.0000000",
-                "timeZone": "UTC"
-              },
-              "isAllDay": false,
-              "location": {
-                "displayName": "会議室 A"
-              },
-              "organizer": {
+              "id": "mock-msg-1",
+              "subject": "1 通目",
+              "from": {
                 "emailAddress": {
-                  "name": "Alice Mock",
-                  "address": "alice@contoso.test"
+                  "name": "Bob Mock",
+                  "address": "bob@contoso.test"
                 }
               },
-              "responseStatus": {
-                "response": "notResponded"
+              "toRecipients": [
+                {
+                  "emailAddress": {
+                    "name": "Alice Mock",
+                    "address": "alice@contoso.test"
+                  }
+                }
+              ],
+              "receivedDateTime": "2026-10-31T01:00:00Z",
+              "isRead": false,
+              "hasAttachments": false,
+              "bodyPreview": "本文の冒頭 1",
+              "body": {
+                "contentType": "text",
+                "content": "本文 1"
+              }
+            },
+            {
+              "id": "mock-msg-2",
+              "subject": "2 通目",
+              "from": {
+                "emailAddress": {
+                  "name": "Bob Mock",
+                  "address": "bob@contoso.test"
+                }
               },
-              "isCancelled": false,
-              "bodyPreview": "議題"
+              "toRecipients": [
+                {
+                  "emailAddress": {
+                    "name": "Alice Mock",
+                    "address": "alice@contoso.test"
+                  }
+                }
+              ],
+              "receivedDateTime": "2026-10-31T02:00:00Z",
+              "isRead": false,
+              "hasAttachments": false,
+              "bodyPreview": "本文の冒頭 2",
+              "body": {
+                "contentType": "text",
+                "content": "本文 2"
+              }
             }
-          ]
+          ],
+          "@odata.nextLink": "https://graph.microsoft.com/v1.0/me/messages?$top=2&$skiptoken=mock-page-2"
         }
       }
     },
     {
       "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/calendarView*",
+        "url": "https://graph.microsoft.com/v1.0/me/mailFolders/mock-folder-endless/messages*",
+        "method": "GET"
+      },
+      "response": {
+        "statusCode": 200,
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "value": [
+            {
+              "id": "mock-msg-1",
+              "subject": "1 通目",
+              "from": {
+                "emailAddress": {
+                  "name": "Bob Mock",
+                  "address": "bob@contoso.test"
+                }
+              },
+              "toRecipients": [
+                {
+                  "emailAddress": {
+                    "name": "Alice Mock",
+                    "address": "alice@contoso.test"
+                  }
+                }
+              ],
+              "receivedDateTime": "2026-10-31T01:00:00Z",
+              "isRead": false,
+              "hasAttachments": false,
+              "bodyPreview": "本文の冒頭 1",
+              "body": {
+                "contentType": "text",
+                "content": "本文 1"
+              }
+            },
+            {
+              "id": "mock-msg-2",
+              "subject": "2 通目",
+              "from": {
+                "emailAddress": {
+                  "name": "Bob Mock",
+                  "address": "bob@contoso.test"
+                }
+              },
+              "toRecipients": [
+                {
+                  "emailAddress": {
+                    "name": "Alice Mock",
+                    "address": "alice@contoso.test"
+                  }
+                }
+              ],
+              "receivedDateTime": "2026-10-31T02:00:00Z",
+              "isRead": false,
+              "hasAttachments": false,
+              "bodyPreview": "本文の冒頭 2",
+              "body": {
+                "contentType": "text",
+                "content": "本文 2"
+              }
+            },
+            {
+              "id": "mock-msg-3",
+              "subject": "3 通目",
+              "from": {
+                "emailAddress": {
+                  "name": "Bob Mock",
+                  "address": "bob@contoso.test"
+                }
+              },
+              "toRecipients": [
+                {
+                  "emailAddress": {
+                    "name": "Alice Mock",
+                    "address": "alice@contoso.test"
+                  }
+                }
+              ],
+              "receivedDateTime": "2026-10-31T03:00:00Z",
+              "isRead": false,
+              "hasAttachments": false,
+              "bodyPreview": "本文の冒頭 3",
+              "body": {
+                "contentType": "text",
+                "content": "本文 3"
+              }
+            },
+            {
+              "id": "mock-msg-4",
+              "subject": "4 通目",
+              "from": {
+                "emailAddress": {
+                  "name": "Bob Mock",
+                  "address": "bob@contoso.test"
+                }
+              },
+              "toRecipients": [
+                {
+                  "emailAddress": {
+                    "name": "Alice Mock",
+                    "address": "alice@contoso.test"
+                  }
+                }
+              ],
+              "receivedDateTime": "2026-10-31T04:00:00Z",
+              "isRead": false,
+              "hasAttachments": false,
+              "bodyPreview": "本文の冒頭 4",
+              "body": {
+                "contentType": "text",
+                "content": "本文 4"
+              }
+            },
+            {
+              "id": "mock-msg-5",
+              "subject": "5 通目",
+              "from": {
+                "emailAddress": {
+                  "name": "Bob Mock",
+                  "address": "bob@contoso.test"
+                }
+              },
+              "toRecipients": [
+                {
+                  "emailAddress": {
+                    "name": "Alice Mock",
+                    "address": "alice@contoso.test"
+                  }
+                }
+              ],
+              "receivedDateTime": "2026-10-31T05:00:00Z",
+              "isRead": false,
+              "hasAttachments": false,
+              "bodyPreview": "本文の冒頭 5",
+              "body": {
+                "contentType": "text",
+                "content": "本文 5"
+              }
+            },
+            {
+              "id": "mock-msg-6",
+              "subject": "6 通目",
+              "from": {
+                "emailAddress": {
+                  "name": "Bob Mock",
+                  "address": "bob@contoso.test"
+                }
+              },
+              "toRecipients": [
+                {
+                  "emailAddress": {
+                    "name": "Alice Mock",
+                    "address": "alice@contoso.test"
+                  }
+                }
+              ],
+              "receivedDateTime": "2026-10-31T06:00:00Z",
+              "isRead": false,
+              "hasAttachments": false,
+              "bodyPreview": "本文の冒頭 6",
+              "body": {
+                "contentType": "text",
+                "content": "本文 6"
+              }
+            },
+            {
+              "id": "mock-msg-7",
+              "subject": "7 通目",
+              "from": {
+                "emailAddress": {
+                  "name": "Bob Mock",
+                  "address": "bob@contoso.test"
+                }
+              },
+              "toRecipients": [
+                {
+                  "emailAddress": {
+                    "name": "Alice Mock",
+                    "address": "alice@contoso.test"
+                  }
+                }
+              ],
+              "receivedDateTime": "2026-10-31T07:00:00Z",
+              "isRead": false,
+              "hasAttachments": false,
+              "bodyPreview": "本文の冒頭 7",
+              "body": {
+                "contentType": "text",
+                "content": "本文 7"
+              }
+            },
+            {
+              "id": "mock-msg-8",
+              "subject": "8 通目",
+              "from": {
+                "emailAddress": {
+                  "name": "Bob Mock",
+                  "address": "bob@contoso.test"
+                }
+              },
+              "toRecipients": [
+                {
+                  "emailAddress": {
+                    "name": "Alice Mock",
+                    "address": "alice@contoso.test"
+                  }
+                }
+              ],
+              "receivedDateTime": "2026-10-31T08:00:00Z",
+              "isRead": false,
+              "hasAttachments": false,
+              "bodyPreview": "本文の冒頭 8",
+              "body": {
+                "contentType": "text",
+                "content": "本文 8"
+              }
+            },
+            {
+              "id": "mock-msg-9",
+              "subject": "9 通目",
+              "from": {
+                "emailAddress": {
+                  "name": "Bob Mock",
+                  "address": "bob@contoso.test"
+                }
+              },
+              "toRecipients": [
+                {
+                  "emailAddress": {
+                    "name": "Alice Mock",
+                    "address": "alice@contoso.test"
+                  }
+                }
+              ],
+              "receivedDateTime": "2026-10-31T09:00:00Z",
+              "isRead": false,
+              "hasAttachments": false,
+              "bodyPreview": "本文の冒頭 9",
+              "body": {
+                "contentType": "text",
+                "content": "本文 9"
+              }
+            },
+            {
+              "id": "mock-msg-10",
+              "subject": "10 通目",
+              "from": {
+                "emailAddress": {
+                  "name": "Bob Mock",
+                  "address": "bob@contoso.test"
+                }
+              },
+              "toRecipients": [
+                {
+                  "emailAddress": {
+                    "name": "Alice Mock",
+                    "address": "alice@contoso.test"
+                  }
+                }
+              ],
+              "receivedDateTime": "2026-10-31T010:00:00Z",
+              "isRead": false,
+              "hasAttachments": false,
+              "bodyPreview": "本文の冒頭 10",
+              "body": {
+                "contentType": "text",
+                "content": "本文 10"
+              }
+            }
+          ],
+          "@odata.nextLink": "https://graph.microsoft.com/v1.0/me/mailFolders/mock-folder-endless/messages?$skiptoken=mock-endless"
+        }
+      }
+    },
+    {
+      "request": {
+        "url": "https://graph.microsoft.com/v1.0/me/sendMail",
+        "method": "POST"
+      },
+      "response": {
+        "statusCode": 202,
+        "headers": []
+      }
+    },
+    {
+      "request": {
+        "url": "https://graph.microsoft.com/v1.0/me/calendarView?*",
         "method": "GET"
       },
       "response": {
@@ -844,33 +971,6 @@
             {
               "id": "mock-event-1",
               "subject": "会議 1",
-              "start": {
-                "dateTime": "2026-11-01T01:00:00.0000000",
-                "timeZone": "UTC"
-              },
-              "end": {
-                "dateTime": "2026-11-01T02:00:00.0000000",
-                "timeZone": "UTC"
-              },
-              "isAllDay": false,
-              "location": {
-                "displayName": "会議室 A"
-              },
-              "organizer": {
-                "emailAddress": {
-                  "name": "Alice Mock",
-                  "address": "alice@contoso.test"
-                }
-              },
-              "responseStatus": {
-                "response": "notResponded"
-              },
-              "isCancelled": false,
-              "bodyPreview": "議題"
-            },
-            {
-              "id": "mock-event-2",
-              "subject": "会議 2",
               "start": {
                 "dateTime": "2026-11-02T01:00:00.0000000",
                 "timeZone": "UTC"
@@ -889,45 +989,98 @@
                   "address": "alice@contoso.test"
                 }
               },
-              "responseStatus": {
-                "response": "notResponded"
+              "attendees": [
+                {
+                  "emailAddress": {
+                    "name": "Bob Mock",
+                    "address": "bob@contoso.test"
+                  },
+                  "type": "required"
+                }
+              ],
+              "bodyPreview": "議題"
+            },
+            {
+              "id": "mock-event-2",
+              "subject": "会議 2",
+              "start": {
+                "dateTime": "2026-11-03T01:00:00.0000000",
+                "timeZone": "UTC"
               },
-              "isCancelled": false,
+              "end": {
+                "dateTime": "2026-11-03T02:00:00.0000000",
+                "timeZone": "UTC"
+              },
+              "isAllDay": false,
+              "location": {
+                "displayName": "会議室 A"
+              },
+              "organizer": {
+                "emailAddress": {
+                  "name": "Alice Mock",
+                  "address": "alice@contoso.test"
+                }
+              },
+              "attendees": [
+                {
+                  "emailAddress": {
+                    "name": "Bob Mock",
+                    "address": "bob@contoso.test"
+                  },
+                  "type": "required"
+                }
+              ],
               "bodyPreview": "議題"
             }
-          ],
-          "@odata.nextLink": "https://graph.microsoft.com/v1.0/me/calendarView?startDateTime=2026-11-01T00%3A00%3A00Z&endDateTime=2026-11-30T00%3A00%3A00Z&%24top=2&%24skip=2"
+          ]
         }
       }
     },
     {
       "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/events/*/accept",
-        "method": "POST"
+        "url": "https://graph.microsoft.com/v1.0/me/events/mock-event-*",
+        "method": "GET"
       },
       "response": {
-        "statusCode": 202,
-        "headers": []
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/events/*/tentativelyAccept",
-        "method": "POST"
-      },
-      "response": {
-        "statusCode": 202,
-        "headers": []
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/events/*/decline",
-        "method": "POST"
-      },
-      "response": {
-        "statusCode": 202,
-        "headers": []
+        "statusCode": 200,
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "id": "mock-event-1",
+          "subject": "会議 1",
+          "start": {
+            "dateTime": "2026-11-02T01:00:00.0000000",
+            "timeZone": "UTC"
+          },
+          "end": {
+            "dateTime": "2026-11-02T02:00:00.0000000",
+            "timeZone": "UTC"
+          },
+          "isAllDay": false,
+          "location": {
+            "displayName": "会議室 A"
+          },
+          "organizer": {
+            "emailAddress": {
+              "name": "Alice Mock",
+              "address": "alice@contoso.test"
+            }
+          },
+          "attendees": [
+            {
+              "emailAddress": {
+                "name": "Bob Mock",
+                "address": "bob@contoso.test"
+              },
+              "type": "required"
+            }
+          ],
+          "bodyPreview": "議題"
+        }
       }
     },
     {
@@ -944,8 +1097,8 @@
           }
         ],
         "body": {
-          "id": "mock-event-4",
-          "subject": "会議 4",
+          "id": "mock-event-created",
+          "subject": "作成した予定",
           "start": {
             "dateTime": "2026-11-04T01:00:00.0000000",
             "timeZone": "UTC"
@@ -964,17 +1117,163 @@
               "address": "alice@contoso.test"
             }
           },
-          "responseStatus": {
-            "response": "notResponded"
-          },
-          "isCancelled": false,
+          "attendees": [
+            {
+              "emailAddress": {
+                "name": "Bob Mock",
+                "address": "bob@contoso.test"
+              },
+              "type": "required"
+            }
+          ],
           "bodyPreview": "議題"
         }
       }
     },
     {
       "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/events/*",
+        "url": "https://graph.microsoft.com/v1.0/me/drives*",
+        "method": "GET"
+      },
+      "response": {
+        "statusCode": 200,
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "value": [
+            {
+              "id": "mock-drive-onedrive",
+              "driveType": "business",
+              "name": "OneDrive",
+              "owner": {
+                "user": {
+                  "displayName": "Alice Mock"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "url": "https://graph.microsoft.com/v1.0/drives/*/root",
+        "method": "GET"
+      },
+      "response": {
+        "statusCode": 200,
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "id": "mock-item-root",
+          "name": "root",
+          "size": 0,
+          "createdDateTime": "2026-10-30T00:00:00Z",
+          "lastModifiedDateTime": "2026-10-31T00:00:00Z",
+          "webUrl": "https://mock-tenant.sharepoint.com/root",
+          "parentReference": {
+            "driveId": "mock-drive-onedrive",
+            "id": "mock-item-root"
+          },
+          "folder": {
+            "childCount": 1
+          },
+          "root": {}
+        }
+      }
+    },
+    {
+      "request": {
+        "url": "https://graph.microsoft.com/v1.0/drives/*/root?*",
+        "method": "GET"
+      },
+      "response": {
+        "statusCode": 200,
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "id": "mock-item-root",
+          "name": "root",
+          "size": 0,
+          "createdDateTime": "2026-10-30T00:00:00Z",
+          "lastModifiedDateTime": "2026-10-31T00:00:00Z",
+          "webUrl": "https://mock-tenant.sharepoint.com/root",
+          "parentReference": {
+            "driveId": "mock-drive-onedrive",
+            "id": "mock-item-root"
+          },
+          "folder": {
+            "childCount": 1
+          },
+          "root": {}
+        }
+      }
+    },
+    {
+      "request": {
+        "url": "https://graph.microsoft.com/v1.0/drives/*/items/mock-item-workbook/workbook/worksheets/*/range(*",
+        "method": "GET"
+      },
+      "response": {
+        "statusCode": 200,
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "address": "Sheet1!A1:B2",
+          "values": [
+            [
+              "品名",
+              "数量"
+            ],
+            [
+              "りんご",
+              3
+            ]
+          ],
+          "formulas": [
+            [
+              "品名",
+              "数量"
+            ],
+            [
+              "りんご",
+              3
+            ]
+          ],
+          "text": [
+            [
+              "品名",
+              "数量"
+            ],
+            [
+              "りんご",
+              "3"
+            ]
+          ],
+          "rowCount": 2,
+          "columnCount": 2
+        }
+      }
+    },
+    {
+      "request": {
+        "url": "https://graph.microsoft.com/v1.0/drives/*/items/mock-item-workbook/workbook/worksheets/*/range(*",
         "method": "PATCH"
       },
       "response": {
@@ -986,47 +1285,25 @@
           }
         ],
         "body": {
-          "id": "mock-event-1",
-          "subject": "会議 1",
-          "start": {
-            "dateTime": "2026-11-01T01:00:00.0000000",
-            "timeZone": "UTC"
-          },
-          "end": {
-            "dateTime": "2026-11-01T02:00:00.0000000",
-            "timeZone": "UTC"
-          },
-          "isAllDay": false,
-          "location": {
-            "displayName": "会議室 A"
-          },
-          "organizer": {
-            "emailAddress": {
-              "name": "Alice Mock",
-              "address": "alice@contoso.test"
-            }
-          },
-          "responseStatus": {
-            "response": "notResponded"
-          },
-          "isCancelled": false,
-          "bodyPreview": "議題"
+          "address": "Sheet1!A1:B2",
+          "values": [
+            [
+              "品名",
+              "数量"
+            ],
+            [
+              "みかん",
+              5
+            ]
+          ],
+          "rowCount": 2,
+          "columnCount": 2
         }
       }
     },
     {
       "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/events/*",
-        "method": "DELETE"
-      },
-      "response": {
-        "statusCode": 204,
-        "headers": []
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/events/*",
+        "url": "https://graph.microsoft.com/v1.0/drives/*/items/mock-item-workbook/workbook/worksheets*",
         "method": "GET"
       },
       "response": {
@@ -1038,52 +1315,20 @@
           }
         ],
         "body": {
-          "id": "mock-event-1",
-          "subject": "会議 1",
-          "start": {
-            "dateTime": "2026-11-01T01:00:00.0000000",
-            "timeZone": "UTC"
-          },
-          "end": {
-            "dateTime": "2026-11-01T02:00:00.0000000",
-            "timeZone": "UTC"
-          },
-          "isAllDay": false,
-          "location": {
-            "displayName": "会議室 A"
-          },
-          "organizer": {
-            "emailAddress": {
-              "name": "Alice Mock",
-              "address": "alice@contoso.test"
+          "value": [
+            {
+              "id": "mock-sheet-1",
+              "name": "Sheet1",
+              "position": 0,
+              "visibility": "Visible"
             }
-          },
-          "responseStatus": {
-            "response": "notResponded"
-          },
-          "isCancelled": false,
-          "bodyPreview": "議題"
+          ]
         }
       }
     },
     {
       "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/drive/items/mock-file-text/content",
-        "method": "GET"
-      },
-      "response": {
-        "statusCode": 302,
-        "headers": [
-          {
-            "name": "Location",
-            "value": "https://mock-download.sharepoint.com/files/text?sig=mock"
-          }
-        ]
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/drives/*/items/mock-file-text/content",
+        "url": "https://graph.microsoft.com/v1.0/drives/*/items/mock-item-text/content",
         "method": "GET"
       },
       "response": {
@@ -1109,12 +1354,12 @@
             "value": "text/plain; charset=utf-8"
           }
         ],
-        "body": "これは模擬のテキストファイルです。\n"
+        "body": "模擬のテキストファイルの中身です。\n"
       }
     },
     {
       "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/drive/items/mock-file-text",
+        "url": "https://graph.microsoft.com/v1.0/drives/*/items/mock-item-large/content",
         "method": "GET"
       },
       "response": {
@@ -1122,86 +1367,15 @@
         "headers": [
           {
             "name": "Content-Type",
-            "value": "application/json"
+            "value": "text/plain; charset=utf-8"
           }
         ],
-        "body": {
-          "id": "mock-file-text",
-          "name": "メモ.txt",
-          "size": 26,
-          "lastModifiedDateTime": "2026-10-30T00:00:00Z",
-          "webUrl": "https://contoso.sharepoint.com/メモ.txt",
-          "parentReference": {
-            "driveId": "mock-drive-1",
-            "id": "mock-root"
-          },
-          "file": {
-            "mimeType": "text/plain"
-          }
-        }
+        "body": "@large-file.txt"
       }
     },
     {
       "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/drive/items/mock-file-large",
-        "method": "GET"
-      },
-      "response": {
-        "statusCode": 200,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "id": "mock-file-large",
-          "name": "大きなログ.txt",
-          "size": 204800,
-          "lastModifiedDateTime": "2026-10-30T00:00:00Z",
-          "webUrl": "https://contoso.sharepoint.com/大きなログ.txt",
-          "parentReference": {
-            "driveId": "mock-drive-1",
-            "id": "mock-root"
-          },
-          "file": {
-            "mimeType": "text/plain"
-          }
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/drive/items/mock-file-binary",
-        "method": "GET"
-      },
-      "response": {
-        "statusCode": 200,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "id": "mock-file-binary",
-          "name": "図.png",
-          "size": 5000,
-          "lastModifiedDateTime": "2026-10-30T00:00:00Z",
-          "webUrl": "https://contoso.sharepoint.com/図.png",
-          "parentReference": {
-            "driveId": "mock-drive-1",
-            "id": "mock-root"
-          },
-          "file": {
-            "mimeType": "image/png"
-          }
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/*/items/*:/*:/content*",
+        "url": "https://graph.microsoft.com/v1.0/drives/*/items/*/content*",
         "method": "PUT"
       },
       "response": {
@@ -1213,14 +1387,15 @@
           }
         ],
         "body": {
-          "id": "mock-file-uploaded",
-          "name": "報告書.md",
-          "size": 26,
-          "lastModifiedDateTime": "2026-10-30T00:00:00Z",
-          "webUrl": "https://contoso.sharepoint.com/報告書.md",
+          "id": "mock-item-uploaded",
+          "name": "アップロード.txt",
+          "size": 5,
+          "createdDateTime": "2026-10-30T00:00:00Z",
+          "lastModifiedDateTime": "2026-10-31T00:00:00Z",
+          "webUrl": "https://mock-tenant.sharepoint.com/アップロード.txt",
           "parentReference": {
-            "driveId": "mock-drive-1",
-            "id": "mock-root"
+            "driveId": "mock-drive-onedrive",
+            "id": "mock-item-root"
           },
           "file": {
             "mimeType": "text/plain"
@@ -1230,97 +1405,7 @@
     },
     {
       "request": {
-        "url": "https://graph.microsoft.com/v1.0/*/items/*/children",
-        "method": "POST",
-        "bodyFragment": "mock-existing-folder"
-      },
-      "response": {
-        "statusCode": 409,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "error": {
-            "code": "nameAlreadyExists",
-            "message": "Name already exists"
-          }
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/*/items/*/children",
-        "method": "POST"
-      },
-      "response": {
-        "statusCode": 201,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "id": "mock-folder-new",
-          "name": "新しいフォルダー",
-          "size": 26,
-          "lastModifiedDateTime": "2026-10-30T00:00:00Z",
-          "webUrl": "https://contoso.sharepoint.com/新しいフォルダー",
-          "parentReference": {
-            "driveId": "mock-drive-1",
-            "id": "mock-root"
-          },
-          "folder": {
-            "childCount": 0
-          }
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/*/items/*",
-        "method": "PATCH"
-      },
-      "response": {
-        "statusCode": 200,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "id": "mock-file-text",
-          "name": "名前を変えたメモ.txt",
-          "size": 26,
-          "lastModifiedDateTime": "2026-10-30T00:00:00Z",
-          "webUrl": "https://contoso.sharepoint.com/名前を変えたメモ.txt",
-          "parentReference": {
-            "driveId": "mock-drive-1",
-            "id": "mock-root"
-          },
-          "file": {
-            "mimeType": "text/plain"
-          }
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/*/items/*",
-        "method": "DELETE"
-      },
-      "response": {
-        "statusCode": 204,
-        "headers": []
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/*/root/search(*",
+        "url": "https://graph.microsoft.com/v1.0/drives/*/search(*",
         "method": "GET"
       },
       "response": {
@@ -1334,14 +1419,15 @@
         "body": {
           "value": [
             {
-              "id": "mock-file-text",
-              "name": "議事録.txt",
-              "size": 26,
-              "lastModifiedDateTime": "2026-10-30T00:00:00Z",
-              "webUrl": "https://contoso.sharepoint.com/議事録.txt",
+              "id": "mock-item-text",
+              "name": "メモ.txt",
+              "size": 33,
+              "createdDateTime": "2026-10-30T00:00:00Z",
+              "lastModifiedDateTime": "2026-10-31T00:00:00Z",
+              "webUrl": "https://mock-tenant.sharepoint.com/メモ.txt",
               "parentReference": {
-                "driveId": "mock-drive-1",
-                "id": "mock-root"
+                "driveId": "mock-drive-onedrive",
+                "id": "mock-item-root"
               },
               "file": {
                 "mimeType": "text/plain"
@@ -1353,7 +1439,7 @@
     },
     {
       "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/drive/root/children?*skip*",
+        "url": "https://graph.microsoft.com/v1.0/drives/*/items/*/children*",
         "method": "GET"
       },
       "response": {
@@ -1367,95 +1453,60 @@
         "body": {
           "value": [
             {
-              "id": "mock-file-binary",
-              "name": "図.png",
-              "size": 5000,
-              "lastModifiedDateTime": "2026-10-30T00:00:00Z",
-              "webUrl": "https://contoso.sharepoint.com/図.png",
-              "parentReference": {
-                "driveId": "mock-drive-1",
-                "id": "mock-root"
-              },
-              "file": {
-                "mimeType": "image/png"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/*/root/children*",
-        "method": "GET"
-      },
-      "response": {
-        "statusCode": 200,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "value": [
-            {
-              "id": "mock-folder-docs",
+              "id": "mock-item-folder",
               "name": "資料",
-              "size": 26,
-              "lastModifiedDateTime": "2026-10-30T00:00:00Z",
-              "webUrl": "https://contoso.sharepoint.com/資料",
+              "size": 0,
+              "createdDateTime": "2026-10-30T00:00:00Z",
+              "lastModifiedDateTime": "2026-10-31T00:00:00Z",
+              "webUrl": "https://mock-tenant.sharepoint.com/資料",
               "parentReference": {
-                "driveId": "mock-drive-1",
-                "id": "mock-root"
+                "driveId": "mock-drive-onedrive",
+                "id": "mock-item-root"
               },
               "folder": {
-                "childCount": 0
+                "childCount": 1
               }
             },
             {
-              "id": "mock-file-text",
+              "id": "mock-item-text",
               "name": "メモ.txt",
-              "size": 26,
-              "lastModifiedDateTime": "2026-10-30T00:00:00Z",
-              "webUrl": "https://contoso.sharepoint.com/メモ.txt",
+              "size": 33,
+              "createdDateTime": "2026-10-30T00:00:00Z",
+              "lastModifiedDateTime": "2026-10-31T00:00:00Z",
+              "webUrl": "https://mock-tenant.sharepoint.com/メモ.txt",
               "parentReference": {
-                "driveId": "mock-drive-1",
-                "id": "mock-root"
+                "driveId": "mock-drive-onedrive",
+                "id": "mock-item-root"
               },
               "file": {
                 "mimeType": "text/plain"
               }
-            }
-          ],
-          "@odata.nextLink": "https://graph.microsoft.com/v1.0/me/drive/root/children?%24top=2&%24skiptoken=mock"
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/*/items/*/children*",
-        "method": "GET"
-      },
-      "response": {
-        "statusCode": 200,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "value": [
+            },
             {
-              "id": "mock-file-text",
-              "name": "メモ.txt",
-              "size": 26,
-              "lastModifiedDateTime": "2026-10-30T00:00:00Z",
-              "webUrl": "https://contoso.sharepoint.com/メモ.txt",
+              "id": "mock-item-workbook",
+              "name": "集計.xlsx",
+              "size": 8192,
+              "createdDateTime": "2026-10-30T00:00:00Z",
+              "lastModifiedDateTime": "2026-10-31T00:00:00Z",
+              "webUrl": "https://mock-tenant.sharepoint.com/集計.xlsx",
               "parentReference": {
-                "driveId": "mock-drive-1",
-                "id": "mock-root"
+                "driveId": "mock-drive-onedrive",
+                "id": "mock-item-root"
+              },
+              "file": {
+                "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              }
+            },
+            {
+              "id": "mock-item-large",
+              "name": "大きなファイル.txt",
+              "size": 10246,
+              "createdDateTime": "2026-10-30T00:00:00Z",
+              "lastModifiedDateTime": "2026-10-31T00:00:00Z",
+              "webUrl": "https://mock-tenant.sharepoint.com/大きなファイル.txt",
+              "parentReference": {
+                "driveId": "mock-drive-onedrive",
+                "id": "mock-item-root"
               },
               "file": {
                 "mimeType": "text/plain"
@@ -1479,14 +1530,15 @@
           }
         ],
         "body": {
-          "id": "mock-file-text",
+          "id": "mock-item-text",
           "name": "メモ.txt",
-          "size": 26,
-          "lastModifiedDateTime": "2026-10-30T00:00:00Z",
-          "webUrl": "https://contoso.sharepoint.com/メモ.txt",
+          "size": 33,
+          "createdDateTime": "2026-10-30T00:00:00Z",
+          "lastModifiedDateTime": "2026-10-31T00:00:00Z",
+          "webUrl": "https://mock-tenant.sharepoint.com/メモ.txt",
           "parentReference": {
-            "driveId": "mock-drive-1",
-            "id": "mock-root"
+            "driveId": "mock-drive-onedrive",
+            "id": "mock-item-root"
           },
           "file": {
             "mimeType": "text/plain"
@@ -1496,7 +1548,7 @@
     },
     {
       "request": {
-        "url": "https://graph.microsoft.com/v1.0/sites?*search*",
+        "url": "https://graph.microsoft.com/v1.0/sites?*",
         "method": "GET"
       },
       "response": {
@@ -1510,11 +1562,10 @@
         "body": {
           "value": [
             {
-              "id": "mock-site-1",
-              "displayName": "営業部",
-              "name": "sales",
-              "webUrl": "https://contoso.sharepoint.com/sites/sales",
-              "description": "営業部のサイト"
+              "id": "mock-tenant.sharepoint.com,00000000-0000-0000-0000-00000000a001,00000000-0000-0000-0000-00000000b001",
+              "name": "pocsite",
+              "displayName": "PoC サイト",
+              "webUrl": "https://mock-tenant.sharepoint.com/sites/pocsite"
             }
           ]
         }
@@ -1522,7 +1573,7 @@
     },
     {
       "request": {
-        "url": "https://graph.microsoft.com/v1.0/sites/*/drives*",
+        "url": "https://graph.microsoft.com/v1.0/sites/mock-tenant.sharepoint.com%2C00000000-0000-0000-0000-00000000a001%2C00000000-0000-0000-0000-00000000b001/drives*",
         "method": "GET"
       },
       "response": {
@@ -1536,10 +1587,9 @@
         "body": {
           "value": [
             {
-              "id": "mock-drive-1",
-              "name": "ドキュメント",
+              "id": "mock-drive-site",
               "driveType": "documentLibrary",
-              "webUrl": "https://contoso.sharepoint.com/sites/sales/Shared%20Documents"
+              "name": "ドキュメント"
             }
           ]
         }
@@ -1547,7 +1597,7 @@
     },
     {
       "request": {
-        "url": "https://graph.microsoft.com/v1.0/me/joinedTeams",
+        "url": "https://graph.microsoft.com/v1.0/sites/mock-tenant.sharepoint.com%2C00000000-0000-0000-0000-00000000a001%2C00000000-0000-0000-0000-00000000b001/lists/mock-list-tasks/items*",
         "method": "GET"
       },
       "response": {
@@ -1561,19 +1611,66 @@
         "body": {
           "value": [
             {
-              "id": "mock-team-1",
-              "displayName": "チーム 1",
-              "description": "説明 1"
+              "id": "1",
+              "fields": {
+                "Title": "タスク 1",
+                "Status": "未着手"
+              }
             },
             {
-              "id": "mock-team-2",
-              "displayName": "チーム 2",
-              "description": "説明 2"
-            },
+              "id": "2",
+              "fields": {
+                "Title": "タスク 2",
+                "Status": "完了"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "url": "https://graph.microsoft.com/v1.0/sites/mock-tenant.sharepoint.com%2C00000000-0000-0000-0000-00000000a001%2C00000000-0000-0000-0000-00000000b001/lists/mock-list-tasks/items",
+        "method": "POST"
+      },
+      "response": {
+        "statusCode": 201,
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "id": "3",
+          "fields": {
+            "Title": "作成したタスク"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "url": "https://graph.microsoft.com/v1.0/sites/mock-tenant.sharepoint.com%2C00000000-0000-0000-0000-00000000a001%2C00000000-0000-0000-0000-00000000b001/lists*",
+        "method": "GET"
+      },
+      "response": {
+        "statusCode": 200,
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "value": [
             {
-              "id": "mock-team-3",
-              "displayName": "チーム 3",
-              "description": "説明 3"
+              "id": "mock-list-tasks",
+              "name": "Tasks",
+              "displayName": "タスク",
+              "list": {
+                "template": "genericList"
+              }
             }
           ]
         }
@@ -1595,11 +1692,9 @@
         "body": {
           "value": [
             {
-              "id": "mock-chat-1",
+              "id": "19:mock-chat-1@thread.v2",
               "topic": "PoC の相談",
-              "chatType": "group",
-              "lastUpdatedDateTime": "2026-10-30T00:00:00Z",
-              "webUrl": "https://teams.microsoft.com/l/chat/mock-chat-1"
+              "chatType": "group"
             }
           ]
         }
@@ -1619,20 +1714,11 @@
           }
         ],
         "body": {
-          "id": "mock-cmsg-9",
-          "replyToId": null,
-          "createdDateTime": "2026-10-30T00:00:00Z",
-          "lastModifiedDateTime": "2026-10-30T00:00:00Z",
-          "from": {
-            "user": {
-              "displayName": "Alice Mock"
-            }
-          },
+          "id": "mock-chatmsg-created",
           "body": {
-            "contentType": "html",
-            "content": "<p>メッセージ 9</p>"
-          },
-          "messageType": "message"
+            "contentType": "text",
+            "content": "送信したメッセージ"
+          }
         }
       }
     },
@@ -1652,36 +1738,16 @@
         "body": {
           "value": [
             {
-              "id": "mock-cmsg-1",
-              "replyToId": null,
-              "createdDateTime": "2026-10-30T00:00:00Z",
-              "lastModifiedDateTime": "2026-10-30T00:00:00Z",
+              "id": "mock-chatmsg-1",
               "from": {
                 "user": {
-                  "displayName": "Alice Mock"
+                  "displayName": "Bob Mock"
                 }
               },
               "body": {
-                "contentType": "html",
-                "content": "<p>メッセージ 1</p>"
-              },
-              "messageType": "message"
-            },
-            {
-              "id": "mock-cmsg-2",
-              "replyToId": null,
-              "createdDateTime": "2026-10-30T00:00:00Z",
-              "lastModifiedDateTime": "2026-10-30T00:00:00Z",
-              "from": {
-                "user": {
-                  "displayName": "Alice Mock"
-                }
-              },
-              "body": {
-                "contentType": "html",
-                "content": "<p>メッセージ 2</p>"
-              },
-              "messageType": "message"
+                "contentType": "text",
+                "content": "チャットのメッセージ"
+              }
             }
           ]
         }
@@ -1689,7 +1755,61 @@
     },
     {
       "request": {
-        "url": "https://graph.microsoft.com/v1.0/teams/*/channels/*/messages/*/replies",
+        "url": "https://graph.microsoft.com/v1.0/me/joinedTeams*",
+        "method": "GET"
+      },
+      "response": {
+        "statusCode": 200,
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "value": [
+            {
+              "id": "mock-team-1",
+              "displayName": "PoC チーム"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "url": "https://graph.microsoft.com/v1.0/teams/mock-team-1/channels/19%3Amock-general%40thread.tacv2/messages*",
+        "method": "GET"
+      },
+      "response": {
+        "statusCode": 200,
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "value": [
+            {
+              "id": "mock-chanmsg-1",
+              "from": {
+                "user": {
+                  "displayName": "Bob Mock"
+                }
+              },
+              "body": {
+                "contentType": "text",
+                "content": "チャネルのメッセージ"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "url": "https://graph.microsoft.com/v1.0/teams/mock-team-1/channels/19%3Amock-general%40thread.tacv2/messages",
         "method": "POST"
       },
       "response": {
@@ -1701,57 +1821,17 @@
           }
         ],
         "body": {
-          "id": "mock-cmsg-8",
-          "replyToId": "mock-cmsg-1",
-          "createdDateTime": "2026-10-30T00:00:00Z",
-          "lastModifiedDateTime": "2026-10-30T00:00:00Z",
-          "from": {
-            "user": {
-              "displayName": "Alice Mock"
-            }
-          },
+          "id": "mock-chanmsg-created",
           "body": {
-            "contentType": "html",
-            "content": "<p>メッセージ 8</p>"
-          },
-          "messageType": "message"
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/teams/*/channels/*/messages",
-        "method": "POST"
-      },
-      "response": {
-        "statusCode": 201,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
+            "contentType": "text",
+            "content": "送信したメッセージ"
           }
-        ],
-        "body": {
-          "id": "mock-cmsg-7",
-          "replyToId": null,
-          "createdDateTime": "2026-10-30T00:00:00Z",
-          "lastModifiedDateTime": "2026-10-30T00:00:00Z",
-          "from": {
-            "user": {
-              "displayName": "Alice Mock"
-            }
-          },
-          "body": {
-            "contentType": "html",
-            "content": "<p>メッセージ 7</p>"
-          },
-          "messageType": "message"
         }
       }
     },
     {
       "request": {
-        "url": "https://graph.microsoft.com/v1.0/teams/*/channels/*/messages/*/replies*",
+        "url": "https://graph.microsoft.com/v1.0/teams/mock-team-1/channels*",
         "method": "GET"
       },
       "response": {
@@ -1765,79 +1845,8 @@
         "body": {
           "value": [
             {
-              "id": "mock-cmsg-3",
-              "replyToId": "mock-cmsg-1",
-              "createdDateTime": "2026-10-30T00:00:00Z",
-              "lastModifiedDateTime": "2026-10-30T00:00:00Z",
-              "from": {
-                "user": {
-                  "displayName": "Alice Mock"
-                }
-              },
-              "body": {
-                "contentType": "html",
-                "content": "<p>メッセージ 3</p>"
-              },
-              "messageType": "message"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/teams/*/channels/*/messages*",
-        "method": "GET"
-      },
-      "response": {
-        "statusCode": 200,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "value": [
-            {
-              "id": "mock-cmsg-1",
-              "replyToId": null,
-              "createdDateTime": "2026-10-30T00:00:00Z",
-              "lastModifiedDateTime": "2026-10-30T00:00:00Z",
-              "from": {
-                "user": {
-                  "displayName": "Alice Mock"
-                }
-              },
-              "body": {
-                "contentType": "html",
-                "content": "<p>メッセージ 1</p>"
-              },
-              "messageType": "message"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "request": {
-        "url": "https://graph.microsoft.com/v1.0/teams/*/channels*",
-        "method": "GET"
-      },
-      "response": {
-        "statusCode": 200,
-        "headers": [
-          {
-            "name": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "value": [
-            {
-              "id": "mock-channel-1",
-              "displayName": "一般",
-              "description": "",
+              "id": "19:mock-general@thread.tacv2",
+              "displayName": "General",
               "membershipType": "standard"
             }
           ]

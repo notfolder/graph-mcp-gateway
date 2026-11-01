@@ -9,8 +9,9 @@
     }
   ],
   "urlsToWatch": [
-    "https://graph.microsoft.com/v1.0/*",
-    "https://mock-download.sharepoint.com/*"
+    "https://graph.microsoft.com/*",
+    "https://mock-download.sharepoint.com/*",
+    "https://login.microsoftonline.com/*"
   ],
   "graphMocks": {
     "$schema": "https://raw.githubusercontent.com/dotnet/dev-proxy/main/schemas/v4.0.0/mockresponseplugin.schema.json",
@@ -20,5 +21,5 @@
   "logLevel": "information",
   "newVersionNotification": "none",
   "showTimestamps": true,
-  "validateSchemas": true
+  "validateSchemas": false
 }
