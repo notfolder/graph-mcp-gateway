@@ -1,0 +1,205 @@
+# 社内共有 M365 MCP サーバー（PoC）の構成。
+# 起動：docker compose up -d --build（値はプロジェクト直下の .env から埋め込む。見本は .env.sample）
+# 受け口（gateway）の 443 番と 8443 番だけをホストに公開する。
+
+name: graph-mcp-gateway
+
+# 依頼資料 P-5 の 12 権限。中継（サインイン時の追加のスコープと OBO）と ms-365-mcp-server（ツールの絞り込み）に同じ値を渡す。
+x-graph-scopes: &graph-scopes "User.Read Mail.ReadWrite Mail.Send Calendars.ReadWrite Files.ReadWrite.All Sites.ReadWrite.All Chat.ReadWrite ChatMessage.Send Team.ReadBasic.All Channel.ReadBasic.All ChannelMessage.Read.All ChannelMessage.Send"
+
+x-relay-env: &relay-env
+  APP_CLIENT_ID: ${APP_CLIENT_ID:-}
+  APP_CLIENT_SECRET: ${APP_CLIENT_SECRET:-}
+  APP_TENANT_ID: ${APP_TENANT_ID:-}
+  APP_REQUIRED_SCOPES: ${APP_REQUIRED_SCOPES:-}
+  APP_GRAPH_SCOPES: *graph-scopes
+  APP_ENTRA_BASE_AUTHORITY: ${APP_ENTRA_BASE_AUTHORITY:-}
+  APP_JWT_SIGNING_KEY: ${APP_JWT_SIGNING_KEY:-}
+  APP_STORAGE_REDIS_URL: ${APP_STORAGE_REDIS_URL:-}
+  APP_STORAGE_ENCRYPTION_KEY: ${APP_STORAGE_ENCRYPTION_KEY:-}
+  APP_REQUIRE_CONSENT: ${APP_REQUIRE_CONSENT:-}
+  APP_ALLOWED_CLIENT_REDIRECT_URIS: ${APP_ALLOWED_CLIENT_REDIRECT_URIS:-}
+  APP_ENABLE_CIMD: ${APP_ENABLE_CIMD:-}
+  APP_ACCESS_TOKEN_EXPIRY_SECONDS: ${APP_ACCESS_TOKEN_EXPIRY_SECONDS:-}
+  APP_STATELESS_HTTP: ${APP_STATELESS_HTTP:-}
+  HTTPS_PROXY: ${HTTPS_PROXY:-}
+  NO_PROXY: ${NO_PROXY:-}
+
+x-relay: &relay
+  build:
+    context: .
+    target: runtime
+  image: graph-mcp-gateway:runtime
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/.well-known/oauth-authorization-server', timeout=3)"]
+    interval: 10s
+    timeout: 5s
+    retries: 6
+    start_period: 10s
+
+x-ms365-env: &ms365-env
+  MS365_MCP_ORG_MODE: "true"
+  MS365_MCP_ALLOWED_SCOPES: *graph-scopes
+  ENABLED_TOOLS: "^(?!(get-download-url|get-upload-url)$$)"
+  MS365_MCP_RATE_LIMIT_DISABLED: "true"
+  MS365_MCP_GRAPH_CIRCUIT_DISABLED: "true"
+  MS365_MCP_DISABLE_DCR: "true"
+  LOG_LEVEL: warn
+  MS365_MCP_AUDIT_LOG: "false"
+  MS365_MCP_LOG_DIR: /tmp/ms365-logs
+  MS365_MCP_MAX_TOP: ${MS365_MAX_TOP:-50}
+  MS365_MCP_MAX_PAGES: ${MS365_MAX_PAGES:-5}
+  MS365_MCP_MAX_ITEMS: ${MS365_MAX_ITEMS:-250}
+  MS365_MCP_BLOB_OUTPUT: "true"
+  MS365_MCP_BLOB_MAX_BYTES: ${MS365_BLOB_MAX_BYTES:-1048576}
+  MS365_MCP_GRAPH_MAX_RETRIES: ${MS365_GRAPH_MAX_RETRIES:-3}
+  NODE_USE_ENV_PROXY: ${NODE_USE_ENV_PROXY:-}
+  HTTPS_PROXY: ${HTTPS_PROXY:-}
+  NO_PROXY: ${NO_PROXY:-}
+
+x-ms365: &ms365
+  image: ghcr.io/softeria/ms-365-mcp-server:0.178.0
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD", "wget", "-q", "-O-", "http://127.0.0.1:3000/"]
+    interval: 30s
+    timeout: 5s
+    retries: 3
+    start_period: 10s
+
+services:
+  gateway:
+    image: nginx:1.30.6
+    restart: unless-stopped
+    ports:
+      - "${GATEWAY_HTTPS_PORT:-443}:443"
+      - "${GATEWAY_OPENWEBUI_HTTPS_PORT:-8443}:8443"
+    environment:
+      PUBLIC_HOSTNAME: ${PUBLIC_HOSTNAME:?PUBLIC_HOSTNAME を .env に書いてください}
+      GATEWAY_CLIENT_MAX_BODY_SIZE: ${GATEWAY_CLIENT_MAX_BODY_SIZE:-16m}
+    volumes:
+      - ./deploy/nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ${GATEWAY_CERT_DIR:-./certs}:/etc/nginx/certs:ro
+    networks:
+      default:
+        aliases:
+          - ${PUBLIC_HOSTNAME}
+    depends_on:
+      relay-full:
+        condition: service_healthy
+      relay-discovery:
+        condition: service_healthy
+      open-webui:
+        condition: service_started
+
+  relay-full:
+    <<: *relay
+    environment:
+      <<: *relay-env
+      APP_BASE_URL: https://${PUBLIC_HOSTNAME}/full
+      APP_UPSTREAM_MCP_URL: http://ms365-full:3000/mcp
+      APP_STORAGE_PREFIX: full
+    volumes:
+      - relay-full-home:/data
+    deploy:
+      replicas: ${RELAY_FULL_REPLICAS:-1}
+
+  relay-discovery:
+    <<: *relay
+    environment:
+      <<: *relay-env
+      APP_BASE_URL: https://${PUBLIC_HOSTNAME}/discovery
+      APP_UPSTREAM_MCP_URL: http://ms365-discovery:3000/mcp
+      APP_STORAGE_PREFIX: discovery
+    volumes:
+      - relay-discovery-home:/data
+    deploy:
+      replicas: ${RELAY_DISCOVERY_REPLICAS:-1}
+
+  ms365-full:
+    <<: *ms365
+    command: ["--http", "3000", "--org-mode"]
+    environment:
+      <<: *ms365-env
+    deploy:
+      replicas: ${MS365_FULL_REPLICAS:-1}
+
+  ms365-discovery:
+    <<: *ms365
+    command: ["--http", "3000", "--org-mode", "--discovery"]
+    environment:
+      <<: *ms365-env
+      MS365_MCP_EAGER_TOOLS: ${MS365_EAGER_TOOLS:-}
+    deploy:
+      replicas: ${MS365_DISCOVERY_REPLICAS:-1}
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:v0.12.5
+    restart: unless-stopped
+    environment:
+      WEBUI_URL: https://${PUBLIC_HOSTNAME}:${GATEWAY_OPENWEBUI_HTTPS_PORT:-8443}
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY:-}
+      WEBUI_ADMIN_EMAIL: ${WEBUI_ADMIN_EMAIL:-}
+      WEBUI_ADMIN_PASSWORD: ${WEBUI_ADMIN_PASSWORD:-}
+      WEBUI_ADMIN_NAME: ${WEBUI_ADMIN_NAME:-}
+      ENABLE_SIGNUP: "false"
+      DEFAULT_USER_ROLE: user
+      OPENAI_API_BASE_URL: ${OPENWEBUI_LLM_BASE_URL:-}
+      OPENAI_API_KEY: ${OPENWEBUI_LLM_API_KEY:-}
+      ENABLE_OLLAMA_API: "false"
+      OFFLINE_MODE: "true"
+      AIOHTTP_CLIENT_SSL_CERT_FILE: /certs/ca-bundle.pem
+      SSL_CERT_FILE: /certs/ca-bundle.pem
+      HTTPS_PROXY: ${HTTPS_PROXY:-}
+      NO_PROXY: ${NO_PROXY:-}
+    volumes:
+      - openwebui-data:/app/backend/data
+      - ${OPENWEBUI_CA_BUNDLE:-./certs/ca-bundle.pem}:/certs/ca-bundle.pem:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 180s
+
+  openwebui-setup:
+    image: graph-mcp-gateway:runtime
+    profiles: ["setup"]
+    entrypoint: ["python", "-m", "graph_mcp_gateway.openwebui_setup"]
+    command: ["configure"]
+    environment:
+      OPENWEBUI_URL: https://${PUBLIC_HOSTNAME}:${GATEWAY_OPENWEBUI_HTTPS_PORT:-8443}
+      WEBUI_ADMIN_EMAIL: ${WEBUI_ADMIN_EMAIL:-}
+      WEBUI_ADMIN_PASSWORD: ${WEBUI_ADMIN_PASSWORD:-}
+      OPENWEBUI_LLM_MODEL: ${OPENWEBUI_LLM_MODEL:-}
+      OPENWEBUI_MCP_URL: https://${PUBLIC_HOSTNAME}/discovery/mcp
+      OPENWEBUI_CA_BUNDLE_PATH: /certs/ca-bundle.pem
+    volumes:
+      - ${OPENWEBUI_CA_BUNDLE:-./certs/ca-bundle.pem}:/certs/ca-bundle.pem:ro
+
+  redis:
+    image: redis:8.10.3
+    profiles: ["multi"]
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+
+  unit:
+    build:
+      context: .
+      target: test
+    image: graph-mcp-gateway:test
+    profiles: ["test"]
+    network_mode: none
+    working_dir: /app
+    volumes:
+      - ./tests:/app/tests:ro
+    command: ["pytest", "tests", "-q", "-p", "no:cacheprovider"]
+
+volumes:
+  relay-full-home:
+  relay-discovery-home:
+  openwebui-data:
+  redis-data:

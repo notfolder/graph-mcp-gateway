@@ -15,8 +15,8 @@ flowchart LR
 
 | ファイル | 役割 |
 |---|---|
-| `devproxyrc.json` | Dev Proxy の設定。MockResponsePlugin だけを使う。`graph.microsoft.com`（v1.0 と beta の全部）、模擬のダウンロード先 `mock-download.sharepoint.com`、`login.microsoftonline.com` を横取りし、模擬の無い要求は 502 にする（`blockUnmockedRequests`）。外へ出られないネットワークではスキーマを取りに行けず起動時に失敗の行が出るので、`validateSchemas` は切ってある |
-| `mocks.json` | 応答の一覧（50 件）。上から順に照合し、最初に一致したものを返す |
+| `devproxyrc.json` | Dev Proxy の設定。MockResponsePlugin だけを使う。`graph.microsoft.com`（v1.0 と beta の全部）、模擬のダウンロード先 `mock-download.sharepoint.com`、`login.microsoftonline.com`、E2E の CIMD の文書の置き場所 `ai-tool.example.com` を横取りし、模擬の無い要求は 502 にする（`blockUnmockedRequests`）。外へ出られないネットワークではスキーマを取りに行けず起動時に失敗の行が出るので、`validateSchemas` は切ってある |
+| `mocks.json` | 応答の一覧（51 件。先頭は E2E の CIMD の文書 `https://ai-tool.example.com/e2e/client-metadata.json`）。上から順に照合し、最初に一致したものを返す |
 | `large-file.txt` | ダウンロードの上限を試すためのファイルの中身（約 10 KiB）。`mocks.json` から `@large-file.txt` で参照する |
 
 ## 起動のしかた

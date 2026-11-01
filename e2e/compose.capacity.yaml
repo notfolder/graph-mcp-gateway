@@ -1,0 +1,13 @@
+# 1 台あたりの処理量の測定：中継と ms-365-mcp-server を CPU 1 個に制限する。
+x-one-cpu: &one-cpu
+  cpus: 1.0
+
+services:
+  relay-full:
+    <<: *one-cpu
+  relay-discovery:
+    <<: *one-cpu
+  ms365-full:
+    <<: *one-cpu
+  ms365-discovery:
+    <<: *one-cpu

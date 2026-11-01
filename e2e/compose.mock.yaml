@@ -1,0 +1,119 @@
+# E2E の mock モードで compose.yaml に重ねる追加ファイル。
+# 使い方：docker compose --env-file e2e/mock.env -f compose.yaml -f e2e/compose.mock.yaml --profile mock up -d
+# パスはプロジェクト直下からの相対パス（最初の compose ファイルの場所が基準）。
+
+x-relay-mock: &relay-mock
+  environment:
+    FASTMCP_SSRF_TRUST_PROXY: ${FASTMCP_SSRF_TRUST_PROXY:-}
+    SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
+  volumes:
+    - ./e2e/.work/certs/relay-bundle.pem:/etc/ssl/certs/ca-certificates.crt:ro
+  depends_on:
+    mock-entra:
+      condition: service_healthy
+    devproxy:
+      condition: service_started
+    ms365-full:
+      condition: service_healthy
+    ms365-discovery:
+      condition: service_healthy
+
+x-ms365-mock: &ms365-mock
+  environment:
+    NODE_EXTRA_CA_CERTS: ${NODE_EXTRA_CA_CERTS:-}
+  volumes:
+    - ./e2e/.work/certs/devproxy-root.pem:/certs/devproxy-root.pem:ro
+  depends_on:
+    devproxy:
+      condition: service_started
+
+services:
+  relay-full:
+    <<: *relay-mock
+    volumes:
+      - relay-full-home:/data
+      - ./e2e/.work/certs/relay-bundle.pem:/etc/ssl/certs/ca-certificates.crt:ro
+
+  relay-discovery:
+    <<: *relay-mock
+    volumes:
+      - relay-discovery-home:/data
+      - ./e2e/.work/certs/relay-bundle.pem:/etc/ssl/certs/ca-certificates.crt:ro
+
+  ms365-full:
+    <<: *ms365-mock
+
+  ms365-discovery:
+    <<: *ms365-mock
+
+  open-webui:
+    environment:
+      HTTPS_PROXY: ""
+      NO_PROXY: ""
+      ENABLE_TITLE_GENERATION: "false"
+      ENABLE_TAGS_GENERATION: "false"
+      ENABLE_FOLLOW_UP_GENERATION: "false"
+    depends_on:
+      mock-llm:
+        condition: service_started
+
+  mock-entra:
+    image: graph-mcp-gateway:test
+    profiles: ["mock"]
+    working_dir: /mock
+    command: ["python", "/mock/mock_entra.py"]
+    environment:
+      MOCK_TLS_CERT: /certs/mock-entra.crt
+      MOCK_TLS_KEY: /certs/mock-entra.key
+      MOCK_PORT: "8443"
+      MOCK_TENANT_ID: ${APP_TENANT_ID}
+      MOCK_CLIENT_ID: ${APP_CLIENT_ID}
+      MOCK_CLIENT_SECRET: ${APP_CLIENT_SECRET}
+      MOCK_ACCESS_TOKEN_LIFETIME: ${MOCK_ACCESS_TOKEN_LIFETIME:-60}
+      MOCK_SIGNING_KEY_FILE: /certs/mock-entra-signing.key
+    volumes:
+      - ./e2e/mocks/entra-id:/mock:ro
+      - ./e2e/.work/certs:/certs:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import ssl, urllib.request; urllib.request.urlopen('https://127.0.0.1:8443/${APP_TENANT_ID}/discovery/v2.0/keys', context=ssl._create_unverified_context(), timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  devproxy:
+    image: ghcr.io/dotnet/dev-proxy:4.0.0
+    profiles: ["mock"]
+    environment:
+      DEV_PROXY_API_TOKEN: ${DEV_PROXY_API_TOKEN}
+    volumes:
+      - ./e2e/mocks/microsoft-graph:/config:ro
+      - ./e2e/.work/devproxy-cert:/home/devproxy/.config/dev-proxy/rootCert
+
+  mock-llm:
+    image: python:3.14.10-slim
+    profiles: ["mock"]
+    command: ["python", "/mock/mock_llm.py", "--port", "8080", "--log", "/work/llm-requests.jsonl"]
+    volumes:
+      - ./e2e/mocks/language-model:/mock:ro
+      - ./e2e/.work/llm:/work
+
+  e2e:
+    image: graph-mcp-gateway:test
+    profiles: ["e2e"]
+    working_dir: /app
+    environment:
+      E2E_MODE: ${E2E_MODE:-mock}
+      E2E_BASE_HOST: ${E2E_BASE_HOST:-gateway}
+      E2E_CA_BUNDLE: /certs/e2e-bundle.pem
+      E2E_WORK_DIR: /work
+      DEV_PROXY_API_TOKEN: ${DEV_PROXY_API_TOKEN}
+      APP_TENANT_ID: ${APP_TENANT_ID}
+      WEBUI_ADMIN_EMAIL: ${WEBUI_ADMIN_EMAIL}
+      WEBUI_ADMIN_PASSWORD: ${WEBUI_ADMIN_PASSWORD}
+      OPENWEBUI_LLM_MODEL: ${OPENWEBUI_LLM_MODEL}
+      SSL_CERT_FILE: /certs/e2e-bundle.pem
+    volumes:
+      - ./e2e:/app/e2e:ro
+      - ./e2e/.work:/work
+      - ./e2e/.work/certs/e2e-bundle.pem:/certs/e2e-bundle.pem:ro
+    command: ["pytest", "e2e", "-q", "-p", "no:cacheprovider"]

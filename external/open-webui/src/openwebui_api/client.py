@@ -190,6 +190,10 @@ class OpenWebUIClient:
         """`GET /api/models`：使えるモデルの一覧を返す。"""
         return await self._json("GET", "/api/models")
 
+    async def get_model(self, model_id: str) -> JSON:
+        """`GET /api/v1/models/model?id=...`：モデルの設定（公開の範囲を含む）を返す。設定が無ければ 404。"""
+        return await self._json("GET", "/api/v1/models/model", params={"id": model_id})
+
     async def create_model(self, model: JSON) -> JSON:
         """`POST /api/v1/models/create`：モデルの設定（公開の範囲を含む）を作る。"""
         return await self._json("POST", "/api/v1/models/create", json_body=model)
