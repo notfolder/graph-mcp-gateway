@@ -43,7 +43,7 @@ async def main() -> int:
         if not await mcp_authenticated(participant):
             await authorize_mcp(participant, "alice")
         assert await mcp_authenticated(participant), CONNECTION_KEY
-    print("Open WebUI: https://gateway:8443（ホストの hosts に「127.0.0.1 gateway」を足し、e2e/.work/certs/ca.crt を信頼させる）")
+    print("Open WebUI: https://localhost:8443（証明書は e2e/.work/certs/ca.crt が発行。信頼させるか警告を承知で進める）")
     print(f"参加者: {PARTICIPANT_EMAIL} / {PARTICIPANT_PASSWORD}（模擬の Entra ID の alice として認可済み）")
     return 0
 

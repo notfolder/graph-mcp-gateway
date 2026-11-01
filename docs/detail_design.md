@@ -376,7 +376,7 @@ sequenceDiagram
 flowchart TD
   A["openwebui-setup を実行"] --> B["/health が200になるまで待つ（最大180秒）"]
   B --> C["管理者でログイン"]
-  C --> D["元の言語モデルと、それを基にしたモデルの設定を利用者全員に公開する（既にあれば飛ばす）"]
+  C --> D["元の言語モデルと、それを基にしたモデルの設定を利用者全員に公開し、自前のツールを渡さず、既定のモデルにする（既にあれば飛ばす）"]
   D --> E{"ツールサーバーの接続先 m365 がある？"}
   E -->|"ある"| G["何もしない"]
   E -->|"ない"| F["探して使う受け口にDCRで登録し、接続先を保存して利用者全員に公開"]
@@ -411,7 +411,7 @@ flowchart TD
 | `DS-FN-EXCHANGE-GRAPH-TOKEN-FT-EXCHANGE-GRAPH-TOKEN-FOR-RELAY` | `RQ-FT-EXCHANGE-GRAPH-TOKEN-FOR-RELAY`、`RQ-NF-DELEGATED-ACCESS-ONLY` | 中継 | `GraphTokenExchanger.exchange` | 利用者の Entra のトークンを受け取り、`AzureProvider.get_obo_credential` で資格情報を得て、Graph の権限の一覧（`https://graph.microsoft.com/<権限>` の形）でトークンを取る。利用者のトークンが無ければ例外にする（サーバー自身の権限で呼ぶ経路を作らない）。OBO が失敗したら、例外の種類と Entra のエラーコードだけをログに出し、詳細（Entra のエラーの文言）を含まない例外にする（ツールの一覧の取得のエラーは `mask_error_details` で伏せられないため） |
 | `DS-FN-CREATE-RELAY-CLIENT-FT-RELAY-MCP-REQUESTS` | `RQ-FT-RELAY-MCP-REQUESTS`、`RQ-NF-NO-TOKEN-EXPOSURE` | 中継 | `RelayClientFactory.__call__` | `get_access_token()` で利用者の Entra のトークンを取り、`exchange` で Graph 用のトークンを得て、`Authorization: Bearer <Graph 用>` をヘッダーに設定したトランスポート（ms-365-mcp-server の URL への Streamable HTTP）を作り、受信したヘッダーを転送しない設定の `ProxyClient` で包んで返す。トークンは `auth` の引数ではなくヘッダーで渡す。`__call__` はダンダーメソッドで対応表に書けないので、対応表ではクラス `RelayClientFactory` に対応付ける |
 | `DS-FN-CREATE-SERVER-UI-MCP-FULL-ENDPOINT` | `RQ-UI-MCP-FULL-ENDPOINT`、`RQ-UI-MCP-DISCOVERY-ENDPOINT`、`RQ-UI-OAUTH-ENDPOINTS-BY-MCP-ENDPOINT`、`RQ-FT-RELAY-MCP-REQUESTS` | サーバー | `create_server` | 設定（と、テスト用のトランスポートを作る関数）から FastMCP を組み立てる。名前は `graph-mcp-gateway`、認証は `build_auth_provider` の結果、`mask_error_details` は有効、ツールの引数の定義は展開しない（`dereference_schemas` を無効）、サーバーの部品の失敗の扱いは「raise」。`ProxyProvider(RelayClientFactory, 一覧のキャッシュ 3600 秒)` を載せる。受け口の違い（全部か探すか）は、中継先の ms-365-mcp-server の URL と公開 URL の設定だけで決まる |
-| `DS-FN-CONFIGURE-OPEN-WEBUI-OP-OPEN-WEBUI-SETUP` | `RQ-OP-OPEN-WEBUI-SETUP`、`RQ-FT-PROVIDE-POC-OPEN-WEBUI` | Open WebUI の初期設定 | `configure_open_webui` | 4-2 の初期設定の処理フロー。管理者でログインし、言語モデル（設定のモデル名）を基にしたモデルの設定（ID `poc-assistant`）を利用者全員に read で公開する。Open WebUI は設定の無い元のモデルを管理者だけに見せ、公開したモデルの元としても一般の利用者に使わせないので、元のモデルの設定（ID は設定のモデル名、元のモデルなし）も無ければ作って利用者全員に read で公開する。モデルの設定の有無は `get_model` で確かめ、最後にモデルの一覧を取って Open WebUI のサーバーのモデルの一覧を新しくする。ツールサーバーの接続先 `m365` が無ければ、探して使う受け口の URL に DCR で登録し、3-1 の接続先の構造で保存する（既存の接続先の一覧に足す形で保存する）。何度実行しても同じ状態になる |
+| `DS-FN-CONFIGURE-OPEN-WEBUI-OP-OPEN-WEBUI-SETUP` | `RQ-OP-OPEN-WEBUI-SETUP`、`RQ-FT-PROVIDE-POC-OPEN-WEBUI` | Open WebUI の初期設定 | `configure_open_webui` | 4-2 の初期設定の処理フロー。管理者でログインし、言語モデル（設定のモデル名）を基にしたモデルの設定（ID `poc-assistant`）を利用者全員に read で公開する。Open WebUI は設定の無い元のモデルを管理者だけに見せ、公開したモデルの元としても一般の利用者に使わせないので、元のモデルの設定（ID は設定のモデル名、元のモデルなし）も無ければ作って利用者全員に read で公開する。元のモデルと `poc-assistant` のどちらにも、Open WebUI の自前のツール（カレンダー・メモなど）を渡さない設定（`meta.capabilities.builtin_tools` を false）を入れる（自前のツールがあると、言語モデルが M365 のツールの代わりに自前のカレンダーを選ぶ。元のモデルも参加者の一覧に出て選べるので両方に入れる。2026-11-01 の社外の確認で実測）。モデルの設定の有無は `get_model` で確かめ、既にある設定がこの値と違えば、その値だけを `update_model` で直す。新しいチャットの既定のモデルは `poc-assistant` にする（モデルの全体の設定 `DEFAULT_MODELS` を `get_models_config` で読み、違えばその値だけを変えて `set_models_config` で書く）。最後にモデルの一覧を取って Open WebUI のサーバーのモデルの一覧を新しくする。ツールサーバーの接続先 `m365` が無ければ、探して使う受け口の URL に DCR で登録し、3-1 の接続先の構造で保存する（既存の接続先の一覧に足す形で保存する）。何度実行しても同じ状態になる |
 | `DS-FN-ADD-OPEN-WEBUI-USERS-FT-MANAGE-OPEN-WEBUI-ACCOUNTS` | `RQ-FT-MANAGE-OPEN-WEBUI-ACCOUNTS`、`RQ-OP-OPEN-WEBUI-SETUP` | Open WebUI の初期設定 | `add_open_webui_users` | 名前・メールアドレス・初期のパスワードの CSV（ヘッダー行あり、Git 管理外のファイル）を読み、管理者のログインで 1 人ずつ役割 `user` のアカウントを作る。同じメールアドレスが既にあれば飛ばして、その旨を表示する。パスワードは表示しない |
 | `DS-FN-SETUP-MAIN-OP-OPEN-WEBUI-SETUP` | `RQ-OP-OPEN-WEBUI-SETUP` | Open WebUI の初期設定 | `main` | 引数の `configure` か `add-users <CSV のパス>` で、上の 2 つを呼ぶ。設定は環境変数（9-3 の Open WebUI の初期設定の行）から読む。失敗は理由（状態コードと `detail`）を標準エラーに出して終了コード 1 |
 | `DS-FN-OPEN-WEBUI-API-METHODS-FT-PROVIDE-POC-OPEN-WEBUI` | `RQ-FT-PROVIDE-POC-OPEN-WEBUI`、`RQ-OP-OPEN-WEBUI-SETUP` | 連携ライブラリ（作成済み） | `OpenWebUIClient` の各メソッド（`health` から `chat_completions` まで）、`request` | Open WebUI のエンドポイントに 1 対 1 で要求を送る。ログイン済みならトークンを付ける。400 以上は `OpenWebUIError`、3xx は返す |
@@ -629,7 +629,7 @@ sequenceDiagram
 | 認証 | 未設定の任意の値を `AzureProvider` に渡さない。設定した値は渡す。サインイン時の追加のスコープが Graph の権限の一覧と一致する。Redis の URL があるときだけ、前置きと暗号化の包みで包んだ保管先を作る |
 | 中継 | 工場が、交換したトークンを `Authorization` に設定し、受信したヘッダーを転送しない設定のクライアントを返す。トークンを `auth` で渡さない。利用者のトークンが無いときは例外。交換が、Graph の権限の一覧で資格情報からトークンを取る |
 | サーバー・起動 | 失敗の扱いが「raise」、引数の定義を展開しない、詳細を伏せる、中継の部品が 1 つ載る。設定の誤りで終了コード 1。応答を JSON にする。MCP のセッションを持たない動作を、設定されたときだけ渡す |
-| Open WebUI の初期設定 | 接続先が無いときだけ DCR と保存を行う。既存の接続先の一覧に足して保存する。元のモデルとモデルの設定を利用者全員に公開し、既にあれば作らない。CSV から利用者を作り、既存のメールアドレスは飛ばす。パスワードを表示しない。失敗で終了コード 1 |
+| Open WebUI の初期設定 | 接続先が無いときだけ DCR と保存を行う。既存の接続先の一覧に足して保存する。元のモデルとモデルの設定を利用者全員に公開し、既にあれば作らない。両方のモデルを自前のツールを渡さない設定にし、既存の設定が違えばその値だけ直す。既定のモデルを `poc-assistant` にする。CSV から利用者を作り、既存のメールアドレスは飛ばす。パスワードを表示しない。失敗で終了コード 1 |
 | Open WebUI の連携ライブラリ | 各メソッドの要求（メソッド、パス、引数、本文）。ログインのトークンの保持と付与。400 以上の例外への変換。3xx を返す |
 
 **結合テスト（全機能要件）**

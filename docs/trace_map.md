@@ -44,12 +44,15 @@
 | `DS-FN-OPEN-WEBUI-API-METHODS-FT-PROVIDE-POC-OPEN-WEBUI` | `external/open-webui/src/openwebui_api/client.py::OpenWebUIClient.register_oauth_client` | メソッド |
 | `DS-FN-OPEN-WEBUI-API-METHODS-FT-PROVIDE-POC-OPEN-WEBUI` | `external/open-webui/src/openwebui_api/client.py::OpenWebUIClient.get_tool_servers` | メソッド |
 | `DS-FN-OPEN-WEBUI-API-METHODS-FT-PROVIDE-POC-OPEN-WEBUI` | `external/open-webui/src/openwebui_api/client.py::OpenWebUIClient.set_tool_servers` | メソッド |
+| `DS-FN-OPEN-WEBUI-API-METHODS-FT-PROVIDE-POC-OPEN-WEBUI` | `external/open-webui/src/openwebui_api/client.py::OpenWebUIClient.get_models_config` | メソッド |
+| `DS-FN-OPEN-WEBUI-API-METHODS-FT-PROVIDE-POC-OPEN-WEBUI` | `external/open-webui/src/openwebui_api/client.py::OpenWebUIClient.set_models_config` | メソッド |
 | `DS-FN-OPEN-WEBUI-API-METHODS-FT-PROVIDE-POC-OPEN-WEBUI` | `external/open-webui/src/openwebui_api/client.py::OpenWebUIClient.list_tools` | メソッド |
 | `DS-FN-OPEN-WEBUI-API-METHODS-FT-PROVIDE-POC-OPEN-WEBUI` | `external/open-webui/src/openwebui_api/client.py::OpenWebUIClient.start_mcp_authorization` | メソッド |
 | `DS-FN-OPEN-WEBUI-API-METHODS-FT-PROVIDE-POC-OPEN-WEBUI` | `external/open-webui/src/openwebui_api/client.py::OpenWebUIClient.finish_mcp_authorization` | メソッド |
 | `DS-FN-OPEN-WEBUI-API-METHODS-FT-PROVIDE-POC-OPEN-WEBUI` | `external/open-webui/src/openwebui_api/client.py::OpenWebUIClient.delete_oauth_session` | メソッド |
 | `DS-FN-OPEN-WEBUI-API-METHODS-FT-PROVIDE-POC-OPEN-WEBUI` | `external/open-webui/src/openwebui_api/client.py::OpenWebUIClient.list_models` | メソッド |
 | `DS-FN-OPEN-WEBUI-API-METHODS-FT-PROVIDE-POC-OPEN-WEBUI` | `external/open-webui/src/openwebui_api/client.py::OpenWebUIClient.get_model` | メソッド |
+| `DS-FN-OPEN-WEBUI-API-METHODS-FT-PROVIDE-POC-OPEN-WEBUI` | `external/open-webui/src/openwebui_api/client.py::OpenWebUIClient.update_model` | メソッド |
 | `DS-FN-OPEN-WEBUI-API-METHODS-FT-PROVIDE-POC-OPEN-WEBUI` | `external/open-webui/src/openwebui_api/client.py::OpenWebUIClient.create_model` | メソッド |
 | `DS-FN-OPEN-WEBUI-API-METHODS-FT-PROVIDE-POC-OPEN-WEBUI` | `external/open-webui/src/openwebui_api/client.py::OpenWebUIClient.create_chat` | メソッド |
 | `DS-FN-OPEN-WEBUI-API-METHODS-FT-PROVIDE-POC-OPEN-WEBUI` | `external/open-webui/src/openwebui_api/client.py::OpenWebUIClient.get_chat` | メソッド |

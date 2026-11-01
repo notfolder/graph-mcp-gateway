@@ -24,6 +24,15 @@ class FakeOpenWebUI:
     requests: list[httpx2.Request] = field(default_factory=list)
     health_failures: int = 0
     register_calls: int = 0
+    models_config: dict[str, Any] = field(
+        default_factory=lambda: {
+            "DEFAULT_MODELS": None,
+            "DEFAULT_PINNED_MODELS": None,
+            "MODEL_ORDER_LIST": ["mock-model"],
+            "DEFAULT_MODEL_METADATA": None,
+            "DEFAULT_MODEL_PARAMS": None,
+        }
+    )
 
     def transport(self) -> httpx2.MockTransport:
         """この模擬に要求を送るトランスポートを返す。"""
@@ -57,9 +66,19 @@ class FakeOpenWebUI:
             if not found:
                 return httpx2.Response(404, json={"detail": "We could not find what you're looking for :/"})
             return httpx2.Response(200, json=found[0])
+        if path == "/api/v1/models/model/update":
+            for index, existing in enumerate(self.models):
+                if existing["id"] == body["id"]:
+                    self.models[index] = {**existing, **body}
+                    return httpx2.Response(200, json=self.models[index])
+            return httpx2.Response(401, json={"detail": "We could not find what you're looking for :/"})
         if path == "/api/v1/models/create":
             self.models.append(body)
             return httpx2.Response(200, json=body)
+        if path == "/api/v1/configs/models":
+            if request.method == "POST":
+                self.models_config = body
+            return httpx2.Response(200, json=self.models_config)
         if path == "/api/v1/configs/tool_servers":
             if request.method == "POST":
                 self.tool_servers = body["TOOL_SERVER_CONNECTIONS"]

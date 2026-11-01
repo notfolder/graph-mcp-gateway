@@ -165,6 +165,14 @@ class OpenWebUIClient:
             "POST", "/api/v1/configs/tool_servers", json_body={"TOOL_SERVER_CONNECTIONS": connections}
         )
 
+    async def get_models_config(self) -> JSON:
+        """`GET /api/v1/configs/models`：モデルの全体の設定（既定のモデル `DEFAULT_MODELS` など）を返す。"""
+        return await self._json("GET", "/api/v1/configs/models")
+
+    async def set_models_config(self, config: JSON) -> JSON:
+        """`POST /api/v1/configs/models`：モデルの全体の設定を、渡したもので置き換える。"""
+        return await self._json("POST", "/api/v1/configs/models", json_body=config)
+
     async def list_tools(self) -> list[JSON]:
         """`GET /api/v1/tools/`：使えるツールの一覧（MCP の接続先の認可の状態を含む）を返す。"""
         return await self._json("GET", "/api/v1/tools/")
@@ -193,6 +201,10 @@ class OpenWebUIClient:
     async def get_model(self, model_id: str) -> JSON:
         """`GET /api/v1/models/model?id=...`：モデルの設定（公開の範囲を含む）を返す。設定が無ければ 404。"""
         return await self._json("GET", "/api/v1/models/model", params={"id": model_id})
+
+    async def update_model(self, model: JSON) -> JSON:
+        """`POST /api/v1/models/model/update`：モデルの設定を、渡した内容（`id` を含む）で更新する。"""
+        return await self._json("POST", "/api/v1/models/model/update", json_body=model)
 
     async def create_model(self, model: JSON) -> JSON:
         """`POST /api/v1/models/create`：モデルの設定（公開の範囲を含む）を作る。"""

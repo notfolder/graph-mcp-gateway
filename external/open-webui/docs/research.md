@@ -47,6 +47,8 @@
 | MCP の接続を切る | `/api/v1/auths/oauth/sessions/{mcp:接続の ID}` | DELETE | なし | — |
 | モデルの一覧 | `/api/models` | GET | なし | 使えるモデル。一般の利用者は、公開されたモデルしか見えない |
 | モデルの設定の取得（管理者） | `/api/v1/models/model?id=...` | GET | `id` | 設定（公開の範囲を含む）。設定が無ければ 404 |
+| モデルの全体の設定（管理者） | `/api/v1/configs/models` | GET・POST | `DEFAULT_MODELS`（新しいチャットの既定のモデル）、`DEFAULT_PINNED_MODELS`、`MODEL_ORDER_LIST` など | 設定。POST は全体を置き換える |
+| モデルの設定の更新（管理者） | `/api/v1/models/model/update` | POST | `id`、`base_model_id`、`name`、`meta`、`params` | 更新した設定 |
 | モデルの設定の作成（管理者） | `/api/v1/models/create` | POST | `id`、`base_model_id`、`access_grants`、`meta.capabilities` | 作った設定 |
 | チャットの作成 | `/api/v1/chats/new` | POST | `chat`（メッセージ ID を含む） | チャットの ID |
 | チャットの取得 | `/api/v1/chats/{id}` | GET | なし | 記録。ツールの呼び出しは `output` の `function_call` |
@@ -54,6 +56,8 @@
 | 発言 | `/api/chat/completions` | POST | `model`、`messages`、`chat_id`、`id`、`session_id`、`tool_ids`（`server:mcp:{接続の ID}`）、`stream` | タスクの ID。処理はバックグラウンドで進み、結果はチャットの記録に入る |
 
 公開の範囲：ツールサーバーの接続先もモデルも、`access_grants` が空なら管理者しか使えない。全員に公開するには `[{"principal_type": "user", "principal_id": "*", "permission": "read"}]`、グループに限るなら `principal_type: group`（`utils/access_control/__init__.py:106-213`）。`BYPASS_MODEL_ACCESS_CONTROL=true` でモデルの制限を外す方法もある（実測なし）。
+
+自前のツールの制約（社外の確認で実測、2026-11-01）：自前のツール（カレンダー、現在時刻など）が渡っていると、Claude は依頼に名前の合う自前のカレンダーのツールを選び、M365 のツールを呼ばなかった。モデルの `meta.capabilities.builtin_tools=false` で外すと M365 のツールを使うが、現在時刻のツールも無くなるので、言語モデルは今日の日付を知らない（利用者には日付をはっきり書いてもらう）。
 
 元のモデルの制約（実装時に実測、2026-11-01）：設定（`model` の表の行）の無い元のモデルは管理者だけが使え、それを元にしたモデルの設定を公開しても一般の利用者は使えない（チャットで「Model not found」。`utils/access_control/__init__.py` の `has_base_model_access`）。元のモデルにも設定を作って公開する。また Open WebUI のサーバーのモデルの一覧（`app.state.MODELS`）は `/api/models` を呼んだときに新しくなるので、設定を作った後に一覧を取る。
 

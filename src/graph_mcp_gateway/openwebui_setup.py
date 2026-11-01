@@ -18,6 +18,7 @@ CONNECTION_ID = "m365"
 CONNECTION_NAME = "Microsoft 365"
 MODEL_ID = "poc-assistant"
 MODEL_NAME = "PoC アシスタント"
+NO_BUILTIN_TOOLS = {"builtin_tools": False}
 EVERYONE_READ = [{"principal_type": "user", "principal_id": "*", "permission": "read"}]
 HEALTH_TIMEOUT_SECONDS = 180.0
 HEALTH_INTERVAL_SECONDS = 3.0
@@ -39,13 +40,29 @@ async def _wait_for_health(client: OpenWebUIClient, timeout: float, interval: fl
 
 
 async def _ensure_model(client: OpenWebUIClient, model: dict[str, Any]) -> None:
-    """モデルの設定が無ければ作る（あれば何もしない）。"""
+    """モデルの設定が無ければ作る。あって、決めた機能の設定（`meta.capabilities`）と違えば、その値だけ直す。"""
     try:
-        await client.get_model(model["id"])
+        existing = await client.get_model(model["id"])
     except OpenWebUIError as exc:
         if exc.status != 404:
             raise
         await client.create_model(model)
+        return
+    wanted = model["meta"]["capabilities"]
+    meta = dict(existing.get("meta") or {})
+    capabilities = dict(meta.get("capabilities") or {})
+    if all(capabilities.get(key) == value for key, value in wanted.items()):
+        return
+    meta["capabilities"] = {**capabilities, **wanted}
+    await client.update_model(
+        {
+            "id": existing["id"],
+            "base_model_id": existing.get("base_model_id"),
+            "name": existing.get("name") or model["name"],
+            "meta": meta,
+            "params": existing.get("params") or {},
+        }
+    )
 
 
 async def configure_open_webui(
@@ -62,7 +79,9 @@ async def configure_open_webui(
 
     `/health` が 200 になるまで待ち、管理者でログインする。言語モデルを基にしたモデルの設定（ID `poc-assistant`）が
     無ければ作って利用者全員に read で公開する。Open WebUI は設定の無い元のモデルを管理者だけに見せ、公開したモデルの
-    元としても使わせないので、元のモデルの設定も無ければ作って利用者全員に read で公開する。最後にモデルの一覧を取り、
+    元としても使わせないので、元のモデルの設定も無ければ作って利用者全員に read で公開する。どちらのモデルにも Open WebUI の
+    自前のツール（カレンダー・メモなど）を渡さない設定（`builtin_tools` を false）を入れ、既にある設定がこの値と違えば直す
+    （言語モデルが M365 のツールの代わりに自前のツールを選ばないように）。新しいチャットの既定のモデルは `poc-assistant` にする。最後にモデルの一覧を取り、
     Open WebUI のサーバーのモデルの一覧を新しくする。ツールサーバーの接続先 `m365` が無ければ、探して使う受け口に DCR で
     登録し、既存の接続先の一覧に足して保存し、利用者全員に公開する。
 
@@ -91,7 +110,7 @@ async def configure_open_webui(
             "id": base_model_id,
             "base_model_id": None,
             "name": base_model_id,
-            "meta": {"description": "PoC の言語モデル", "capabilities": {}},
+            "meta": {"description": "PoC の言語モデル", "capabilities": NO_BUILTIN_TOOLS},
             "params": {},
             "access_grants": EVERYONE_READ,
         },
@@ -102,11 +121,14 @@ async def configure_open_webui(
             "id": MODEL_ID,
             "base_model_id": base_model_id,
             "name": MODEL_NAME,
-            "meta": {"description": "Microsoft 365 のツールを探して使う PoC 用のモデル", "capabilities": {}},
+            "meta": {"description": "Microsoft 365 のツールを探して使う PoC 用のモデル", "capabilities": NO_BUILTIN_TOOLS},
             "params": {},
             "access_grants": EVERYONE_READ,
         },
     )
+    models_config = await client.get_models_config()
+    if models_config.get("DEFAULT_MODELS") != MODEL_ID:
+        await client.set_models_config({**models_config, "DEFAULT_MODELS": MODEL_ID})
     await client.list_models()
 
     connections: list[dict[str, Any]] = list((await client.get_tool_servers()).get("TOOL_SERVER_CONNECTIONS", []))

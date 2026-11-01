@@ -60,6 +60,12 @@ async def test_open_webui_end_to_end(tmp_path: Path) -> None:
     await _configure()
     assert await _snapshot() == first
     servers, models = first
+    async with new_client() as admin:
+        await admin.signin(*_admin())
+        assert (await admin.get_model(MODEL_ID))["meta"]["capabilities"].get("builtin_tools") is False
+        base = os.environ["OPENWEBUI_LLM_MODEL"]
+        assert (await admin.get_model(base))["meta"]["capabilities"].get("builtin_tools") is False
+        assert (await admin.get_models_config())["DEFAULT_MODELS"] == MODEL_ID
     assert [s["info"]["id"] for s in servers] == [CONNECTION_ID]
     assert models == [MODEL_ID]
 
@@ -90,6 +96,7 @@ async def test_open_webui_end_to_end(tmp_path: Path) -> None:
         text = json.dumps(record, ensure_ascii=False)
         assert "TOOL_RESULT:" in text
     requests = _llm_requests()[before:]
+    assert requests and all(r["tool_count"] == 3 for r in requests), [r["tool_count"] for r in requests]
     tool_results = [text for r in requests for text in r.get("tool_results", [])]
     assert any("found" in text for text in tool_results)
     assert any("Alice Mock" in text for text in tool_results)

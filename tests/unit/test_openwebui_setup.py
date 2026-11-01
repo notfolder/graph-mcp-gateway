@@ -77,6 +77,48 @@ async def test_creates_models_shared_with_everyone_only_when_missing() -> None:
     assert sum(r.url.path == "/api/v1/models/create" for r in fake.requests) == 2
 
 
+async def test_preset_model_does_not_get_builtin_tools() -> None:
+    fake = FakeOpenWebUI()
+    await _configure(fake)
+    preset = next(m for m in fake.models if m["id"] == "poc-assistant")
+    assert preset["meta"]["capabilities"] == {"builtin_tools": False}
+    base = next(m for m in fake.models if m["id"] == "mock-model" and "access_grants" in m)
+    assert base["meta"]["capabilities"] == {"builtin_tools": False}
+
+
+async def test_default_model_is_preset_keeping_other_model_settings() -> None:
+    fake = FakeOpenWebUI()
+    await _configure(fake)
+    assert fake.models_config["DEFAULT_MODELS"] == "poc-assistant"
+    assert fake.models_config["MODEL_ORDER_LIST"] == ["mock-model"]
+    posts = sum(r.method == "POST" and r.url.path == "/api/v1/configs/models" for r in fake.requests)
+    assert posts == 1
+
+    await _configure(fake)
+    assert sum(r.method == "POST" and r.url.path == "/api/v1/configs/models" for r in fake.requests) == 1
+
+
+async def test_existing_preset_with_builtin_tools_is_corrected_keeping_other_settings() -> None:
+    existing = {
+        "id": "poc-assistant",
+        "base_model_id": "mock-model",
+        "name": "PoC アシスタント",
+        "meta": {"description": "既存", "capabilities": {"vision": True}},
+        "params": {"temperature": 0.2},
+        "access_grants": [],
+    }
+    fake = FakeOpenWebUI(models=[{"id": "mock-model"}, existing])
+    await _configure(fake)
+    preset = next(m for m in fake.models if m["id"] == "poc-assistant")
+    assert preset["meta"]["capabilities"] == {"vision": True, "builtin_tools": False}
+    assert preset["meta"]["description"] == "既存"
+    assert preset["params"] == {"temperature": 0.2}
+    assert sum(r.url.path == "/api/v1/models/model/update" for r in fake.requests) == 1
+
+    await _configure(fake)
+    assert sum(r.url.path == "/api/v1/models/model/update" for r in fake.requests) == 1
+
+
 async def test_refreshes_model_list_after_setup() -> None:
     fake = FakeOpenWebUI()
     await _configure(fake)

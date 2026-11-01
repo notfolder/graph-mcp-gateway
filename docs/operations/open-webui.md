@@ -18,7 +18,7 @@
 
    - Open WebUI の `/health` が 200 になるまで待つ（最大 3 分）。
    - 管理者（`.env` の `WEBUI_ADMIN_EMAIL`・`WEBUI_ADMIN_PASSWORD`）でログインする。
-   - 言語モデル（`.env` の `OPENWEBUI_LLM_MODEL`）と、それを基にしたモデルの設定「PoC アシスタント」を利用者全員に公開する。
+   - 言語モデル（`.env` の `OPENWEBUI_LLM_MODEL`）と、それを基にしたモデルの設定「PoC アシスタント」を利用者全員に公開する。どちらにも Open WebUI の自前のツール（カレンダー・メモなど）を渡さない設定を入れ、新しいチャットの既定のモデルを「PoC アシスタント」にする。
    - ツールサーバーの接続先「Microsoft 365」（探して使う受け口 `https://<公開のホスト名>/discovery/mcp`）が無ければ、DCR で登録して保存し、利用者全員に公開する。
 
    失敗したときは、状態コードと理由が表示され、終了コード 1 で止まる。429（API rate limit exceeded）のときは、Open WebUI のログインの回数の制限（メールアドレスごとに 3 分で 15 回）なので、3 分待ってから実行し直す。
