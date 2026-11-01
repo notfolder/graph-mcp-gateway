@@ -3,6 +3,40 @@
   "mocks": [
     {
       "request": {
+        "url": "https://ai-tool.example.com/e2e/client-metadata.json",
+        "method": "GET"
+      },
+      "response": {
+        "statusCode": 200,
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "name": "Cache-Control",
+            "value": "max-age=60"
+          }
+        ],
+        "body": {
+          "client_id": "https://ai-tool.example.com/e2e/client-metadata.json",
+          "client_name": "E2E Test MCP Client (CIMD)",
+          "redirect_uris": [
+            "http://127.0.0.1:33418/callback"
+          ],
+          "token_endpoint_auth_method": "none",
+          "grant_types": [
+            "authorization_code",
+            "refresh_token"
+          ],
+          "response_types": [
+            "code"
+          ]
+        }
+      }
+    },
+    {
+      "request": {
         "url": "https://graph.microsoft.com/v1.0/me/messages/mock-401*",
         "method": "GET"
       },

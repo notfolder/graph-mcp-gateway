@@ -83,7 +83,7 @@ ms-365-mcp-server の外向きの API は MCP の 3 つの要求だけ。ツー�
 |---|---|---|
 | 要求元ごとの回数の制限 | `/mcp` が IP ごとに毎分 120 回 | `MS365_MCP_RATE_LIMIT_DISABLED=true` で外す（要件） |
 | 回路遮断器 | Graph の一時的なエラー（429・503・504・ネットワーク）が再試行の 1 回ごとに数えられ、5 回続くと 30 秒のあいだプロセスの中の全員の Graph の呼び出しを止める。プロセスで 1 つ（`src/lib/graph-resilience.ts:325-338`、実測） | `MS365_MCP_GRAPH_CIRCUIT_DISABLED=true` で無効にする（要件） |
-| 再試行 | 429 はすべてのメソッド（`Retry-After` に従い最大 60 秒）、503・504・ネットワークは冪等なメソッドだけ。POST・PATCH の 503・504 は再試行しない。回数は既定 3 回（`MS365_MCP_GRAPH_MAX_RETRIES`）。1 回の要求の制限時間は既定 100 秒（`MS365_MCP_GRAPH_TIMEOUT_MS`） | 要件「Graph の一時的なエラーで再試行する」をこの動きで満たす。中継の側では再試行しない |
+| 再試行 | 429 はすべてのメソッド（`Retry-After` に従い最大 60 秒）、503・504・ネットワークは冪等なメソッドだけ（実装時の実測で、503 は `Retry-After` を待たずに短い間隔で再試行し、3 回の再試行が 1 秒未満で終わった）。POST・PATCH の 503・504 は再試行しない。回数は既定 3 回（`MS365_MCP_GRAPH_MAX_RETRIES`）。1 回の要求の制限時間は既定 100 秒（`MS365_MCP_GRAPH_TIMEOUT_MS`） | 要件「Graph の一時的なエラーで再試行する」をこの動きで満たす。中継の側では再試行しない |
 | ページネーション | ツールの引数 `fetchAllPages` で全ページをまとめて取る（既定で最大 100 ページ・1 万件）。`$top` の上限は既定で無い | 要件「ツールの応答の大きさの上限」で、`MS365_MCP_MAX_TOP`・`MS365_MCP_MAX_PAGES`・`MS365_MCP_MAX_ITEMS` の値を設計で決める |
 | ファイルの中身 | `download-bytes` は既定で上限なし。`MS365_MCP_BLOB_OUTPUT=true` で `MS365_MCP_BLOB_MAX_BYTES`（既定 5 MiB）の上限が効く | 同上 |
 | 認証なしの URL | `get-download-url` はファイルを認証なしで取れる短期の URL を返す。`get-upload-url` は HTTP モードでは必ずエラー | どちらも出さない（要件。`ENABLED_TOOLS` などの絞り込みの書き方は設計で決める） |

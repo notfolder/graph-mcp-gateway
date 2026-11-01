@@ -1,0 +1,7 @@
+.git
+.venv
+.env
+.history
+e2e/.work
+certs
+**/__pycache__

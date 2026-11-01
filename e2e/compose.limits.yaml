@@ -1,0 +1,12 @@
+# 応答の大きさの上限を小さくした設定（上限のシナリオで ms-365-mcp-server に重ねる）。
+x-limits: &limits
+  environment:
+    MS365_MCP_MAX_TOP: "5"
+    MS365_MCP_MAX_ITEMS: "25"
+    MS365_MCP_BLOB_MAX_BYTES: "4096"
+
+services:
+  ms365-full:
+    <<: *limits
+  ms365-discovery:
+    <<: *limits

@@ -1,0 +1,5 @@
+# 探して使う受け口で直接出すツールを設定する（直接出すツールのシナリオで重ねる）。
+services:
+  ms365-discovery:
+    environment:
+      MS365_MCP_EAGER_TOOLS: get-current-user

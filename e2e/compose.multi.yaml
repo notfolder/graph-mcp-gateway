@@ -1,0 +1,25 @@
+# 台数を増やした構成（台数のシナリオ）：署名鍵、Redis、セッションを持たない動作、各部分を 2 台。
+# 値は試験用の固定値で、秘密ではない。
+x-multi-relay: &multi-relay
+  environment:
+    APP_JWT_SIGNING_KEY: e2e-multi-signing-key-not-a-real-secret-0123456789
+    APP_STORAGE_REDIS_URL: redis://redis:6379/0
+    APP_STORAGE_ENCRYPTION_KEY: x3gVhQ7H8m1kRk6rIhB1lQnq0b7r3ZcO2m1n2p3q4r8=
+    APP_STATELESS_HTTP: "true"
+  deploy:
+    replicas: 2
+  depends_on:
+    redis:
+      condition: service_started
+
+services:
+  relay-full:
+    <<: *multi-relay
+  relay-discovery:
+    <<: *multi-relay
+  ms365-full:
+    deploy:
+      replicas: 2
+  ms365-discovery:
+    deploy:
+      replicas: 2
